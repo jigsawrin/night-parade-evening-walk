@@ -1,0 +1,20 @@
+# 型・テスト・ビルド・ビルドの大きさを、push と PR のたびに確かめる（GitHub Actions のみ。外部サービス・秘密情報は使わない）
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:size

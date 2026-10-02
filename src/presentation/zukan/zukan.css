@@ -1,0 +1,232 @@
+/* ---- 妖怪図鑑（一体で横一列を丸ごと使う本。ZukanBook・ZukanCards） ----
+ * PC：左に姿（墨絵 / 3D、約 38%）・右に文。スマホ（600px 以下）：名前 → よみ・格 → 姿 → 伝承 → 出会い方 → ひとこと → 記録 の縦積み
+ * 名前・よみ・別名は一行に収める（ZukanBook.fitLines）。横スクロールは出さない */
+
+.zk-book {
+  width: min(96vw, 1080px);
+  max-width: none;
+  max-height: 92vh;
+  max-height: 92dvh;
+  padding: 0 24px 20px;
+  text-align: left;
+  position: relative;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+.zk-book [hidden] { display: none !important; }
+
+/* 上の帳（sticky）：題・出会った数・閉じる／検索・登録済みのみ／区分へのジャンプ */
+.zk-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 -24px;
+  padding: 12px 24px 8px;
+  background:
+    repeating-linear-gradient(115deg, rgba(160, 130, 90, 0.06) 0 2px, transparent 2px 7px),
+    var(--washi);
+  border-bottom: 2px solid rgba(90, 62, 38, 0.35);
+  box-shadow: 0 6px 10px -8px rgba(40, 25, 10, 0.5);
+}
+.zk-toolbar-top { display: flex; align-items: center; gap: 12px; }
+.zk-toolbar-top h2 { margin: 0; font-size: 30px; white-space: nowrap; }
+#zukan-seen { flex: 1 1 auto; min-width: 0; font-size: 13px; color: var(--ink-soft); }
+#zukan-close { flex: none; min-height: 40px; }
+.zk-toolbar-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.zk-search { flex: 1 1 auto; min-width: 0; display: flex; }
+.zk-search-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.zk-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 16px; /* スマホで寄らない大きさ */
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(90, 62, 38, 0.45);
+  border-radius: 4px;
+}
+.zk-search input:focus-visible { outline: 2px solid var(--shu); outline-offset: 1px; }
+.zk-toggle, .zk-jump button, .zk-tab {
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(90, 62, 38, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.zk-toggle { flex: none; min-height: 40px; padding: 4px 12px; font-size: 14px; white-space: nowrap; }
+.zk-toggle[aria-pressed="true"], .zk-tab[aria-pressed="true"] {
+  color: #fff6e8;
+  background: linear-gradient(180deg, #d0503a, var(--shu) 45%, #8a2a20);
+  border-color: #6a1f18;
+}
+.zk-jump { display: flex; gap: 8px; margin-top: 8px; }
+.zk-jump button { min-height: 36px; padding: 2px 14px; font-family: var(--font-head); font-size: 16px; }
+.zk-jump button:disabled, .zk-tab:disabled { opacity: 0.45; cursor: default; }
+.zk-toggle:focus-visible, .zk-jump button:focus-visible, .zk-tab:focus-visible, .zk-play:focus-visible { outline: 2px solid var(--shu); outline-offset: 2px; }
+
+/* 区分の見出し（妖 怪／大 妖 怪／三 大 妖 怪）。控えめな区切り */
+.zk-section-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 12px;
+  font-family: var(--font-head);
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+}
+.zk-section-title::before, .zk-section-title::after { content: ""; flex: 1 1 auto; border-top: 1px solid rgba(90, 62, 38, 0.3); }
+.rank-greater > .zk-section-title, .rank-threeGreat > .zk-section-title { color: #8a2a20; }
+
+/* 一体の枠（登録済み） */
+.zk-entry {
+  position: relative;
+  margin: 0 0 16px;
+  padding: 16px 20px 18px;
+  border: 1px solid rgba(120, 90, 50, 0.32);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.34);
+}
+.zk-entry.rank-greater, .zk-entry.rank-threeGreat { border-color: rgba(200, 55, 45, 0.35); }
+.zk-entry .fit { display: block; min-width: 0; flex: 1 1 auto; overflow: hidden; white-space: nowrap; }
+.zk-entry .fit > span { display: inline-block; transform-origin: left center; }
+.zk-entry-header { display: flex; align-items: center; gap: 12px; padding-bottom: 4px; border-bottom: 1px solid rgba(120, 90, 50, 0.22); }
+.zk-name-row { flex: 1 1 auto; min-width: 0; display: flex; margin: 0; font-weight: 400; }
+.zk-entry .zk-name { font-family: var(--font-head); font-size: 36px; line-height: 1.25; }
+.zk-rank {
+  flex: none;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--ink-soft);
+  border: 1px solid rgba(120, 90, 50, 0.4);
+  border-radius: 3px;
+  padding: 1px 8px;
+}
+.zk-rank.rank-greater, .zk-rank.rank-threeGreat { color: var(--shu); border-color: rgba(200, 55, 45, 0.5); font-weight: 700; }
+.zk-sub { margin-top: 4px; }
+.zk-read, .zk-alias { display: flex; align-items: baseline; gap: 8px; font-size: 15px; }
+.zk-read .fit { color: var(--ink-soft); }
+.zk-alias { margin-top: 2px; font-size: 13px; }
+.zk-label { flex: none; color: var(--ink-soft); }
+
+.zk-body { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr); gap: 20px; margin-top: 12px; align-items: start; }
+
+/* 姿の枠（墨絵 / 3D）。墨絵は切り取らない（contain）。3D の canvas の中だけ指を取る */
+/* 一体の枠が一画面に収まるよう、姿の枠は画面の高さの半分ほどまで（4:5 の比率のまま幅を詰める） */
+.zk-visual { margin: 0 auto; min-width: 0; width: min(100%, 40vh, 380px); }
+.zk-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 252, 240, 0.9), rgba(239, 228, 200, 0.85) 70%, rgba(214, 196, 160, 0.8));
+  box-shadow: inset 0 0 0 1px rgba(90, 62, 38, 0.25), inset 0 0 24px rgba(120, 90, 50, 0.18);
+}
+/* 墨絵は透明な背景（和紙の地は枠の色）。切り取らず、枠の縁に少し余白を残して収める */
+.zk-ink { position: absolute; inset: 0; box-sizing: border-box; width: 100%; height: 100%; padding: 5%; object-fit: contain; }
+.zk-model-mount { position: absolute; inset: 0; }
+.zk-stage[data-mode="ink"] .zk-model-mount, .zk-stage[data-mode="3d"] .zk-ink { display: none; }
+.zk-stage.playing .zk-play { display: none; }
+.zk-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  cursor: pointer;
+}
+.zk-play-icon {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 3px solid rgba(200, 55, 45, 0.75);
+  color: var(--shu);
+  font-family: var(--font-head);
+  font-size: 40px;
+  line-height: 1;
+  transform: rotate(-6deg);
+  opacity: 0.8;
+}
+.zk-play-text { font-size: 14px; letter-spacing: 0.1em; }
+.zk-play:hover .zk-play-icon { opacity: 1; }
+.zk-model-canvas { position: absolute; inset: 0; width: 100%; height: 100%; outline: none; touch-action: none; cursor: grab; }
+.zk-model-help { position: absolute; left: 6px; right: 6px; bottom: 4px; margin: 0; text-align: center; font-size: 11px; color: rgba(60, 45, 40, 0.7); pointer-events: none; }
+.zk-visual-tabs { display: flex; gap: 8px; margin-top: 8px; }
+.zk-tab { flex: 1 1 0; min-height: 40px; padding: 2px 8px; font-size: 15px; }
+.zk-tab small { margin-left: 6px; font-size: 11px; opacity: 0.85; }
+
+/* 文：伝承 → この町での出会い方 → ひとこと → 記録 */
+.zk-info { min-width: 0; font-size: 15px; line-height: 1.75; }
+.zk-info h5 { margin: 0 0 2px; font-family: var(--font-deco); font-size: 13px; font-weight: 700; color: var(--shu); letter-spacing: 0.08em; }
+.zk-info p { margin: 0; overflow-wrap: anywhere; }
+.zk-encounter { margin-top: 14px; }
+.zk-appear { display: block; margin-bottom: 2px; font-size: 0.9em; color: var(--ink-soft); }
+.zk-flavor {
+  margin-top: 16px !important;
+  padding: 6px 0 6px 12px;
+  border-left: 3px solid rgba(200, 55, 45, 0.55);
+  font-family: var(--font-deco);
+  color: #4a3a44;
+}
+.zk-record { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 16px 0 0; padding-top: 8px; border-top: 1px dashed rgba(120, 90, 50, 0.3); font-size: 14px; }
+.zk-record div { display: flex; gap: 10px; align-items: baseline; }
+.zk-record dt { color: var(--ink-soft); }
+.zk-record dd { margin: 0; color: var(--shu); font-weight: 700; }
+
+/* 未登録（？？？）：ヒントの一言だけ。少し小さく */
+.zk-entry.unknown { padding: 10px 20px 12px; background: rgba(40, 30, 40, 0.08); color: #8a7a70; border-style: dashed; }
+.zk-entry.unknown .zk-name { margin: 0; font-family: var(--font-head); font-weight: 400; font-size: 22px; }
+.zk-hint { margin: 2px 0 0; font-size: 14px; }
+
+.zk-empty { margin: 28px 0; text-align: center; color: var(--ink-soft); }
+
+/* スマホ（縦画面）：姿を上に、文を下に縦積み */
+@media (max-width: 600px) {
+  .zk-book {
+    width: 100vw;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 0 12px calc(16px + env(safe-area-inset-bottom));
+  }
+  .zk-toolbar { margin: 0 -12px; padding: calc(8px + env(safe-area-inset-top)) 12px 6px; }
+  .zk-toolbar-top { gap: 8px; }
+  .zk-toolbar-top h2 { font-size: 24px; }
+  #zukan-seen { font-size: 11px; line-height: 1.35; }
+  .zk-toolbar-row { margin-top: 6px; gap: 8px; }
+  .zk-toggle { padding: 4px 10px; font-size: 13px; }
+  .zk-jump { margin-top: 6px; gap: 6px; }
+  .zk-jump button { flex: 1 1 0; padding: 2px 4px; font-size: 15px; }
+  .zk-section-title { margin: 16px 0 10px; font-size: 17px; }
+  .zk-entry { padding: 12px 12px 14px; margin-bottom: 12px; }
+  .zk-entry .zk-name { font-size: 28px; }
+  .zk-rank { font-size: 13px; padding: 1px 6px; }
+  .zk-read { font-size: 14px; }
+  .zk-body { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  /* 姿の枠は横幅いっぱいにしない（両脇に指でスクロールできる余白を残す） */
+  .zk-visual { width: min(100%, 250px, 38vh); }
+  .zk-info { font-size: 14px; line-height: 1.7; }
+  .zk-entry.unknown { padding: 8px 12px 10px; }
+  .zk-entry.unknown .zk-name { font-size: 19px; }
+  .zk-hint { font-size: 13px; }
+}
+
+/* タッチ：押せる大きさは 44px 以上 */
+@media (hover: none) and (pointer: coarse) {
+  #zukan-close, .zk-search input, .zk-toggle, .zk-jump button, .zk-tab { min-height: 44px; }
+}

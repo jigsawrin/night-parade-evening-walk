@@ -1,0 +1,13 @@
+Copyright (c) 2026 jigsawrin. All rights reserved.
+
+このリポジトリのソースコード・ドキュメント・画像（public/yokai-ink/ の妖怪の墨絵を含む）は、
+閲覧のために公開しているものです。著作権者の書面による許可なく、複製・改変・再配布・
+商用利用・別作品への転用をすることはできません。
+
+All rights reserved. This repository is published for viewing only. No permission is granted to copy,
+modify, redistribute, or use the code or artwork, in whole or in part, without prior written permission
+from the copyright holder.
+
+Third-party components keep their own licenses:
+- Fonts in src/assets/fonts/ — SIL Open Font License 1.1 (see LICENSES/)
+- Runtime dependencies (@babylonjs/core, @babylonjs/loaders) — Apache-2.0

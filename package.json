@@ -1,0 +1,24 @@
+{
+  "name": "hyakki",
+  "version": "0.3.0",
+  "private": true,
+  "description": "百鬼夜行 ～宵歩き～ / Night Parade: Evening Walk - prototype v0.3",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import ./tests/support/resolve-ts.mjs --test tests/*.test.ts",
+    "fonts": "node scripts/fonts.mjs",
+    "check:size": "node scripts/bundle-size.mjs"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^8.56.2",
+    "@babylonjs/loaders": "^8.56.2"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}

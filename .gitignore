@@ -1,0 +1,6 @@
+node_modules
+dist
+*.log
+
+# 元絵（重いので git に入れない。変換したものだけ public/ に置く：scripts/yokai-ink.py）
+art-source/

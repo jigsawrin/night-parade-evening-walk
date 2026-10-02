@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <title>百鬼夜行 ～宵歩き～ / Night Parade: Evening Walk</title>
+    <meta name="description" content="一匹の小さな妖怪から始まり、一夜の街を旅しながら仲間を増やし、自分だけの百鬼夜行を完成させる、暖かく少し怪しい和風3D箱庭ゲーム。" />
+    
+  </head>
+  <body data-stage="solo">
+    <canvas id="game"></canvas>
+
+    <div id="hud" class="hidden">
+      <!-- 左上：百鬼夜行の数と夜行位 -->
+      <div id="counter" class="washi-card">
+        <div class="counter-kanji"><span id="count-kanji">一</span><span class="yo">妖</span></div>
+        <div class="counter-sub">
+          <span id="stage-jp">独り歩き</span>
+          <span id="stage-en">SOLO</span>
+        </div>
+        <div class="stage-bar"><div id="stage-fill"></div></div>
+        <div id="stage-next">次の夜行位まで あと四妖</div>
+        <div id="momentum" title="賑わい：新しい場所を練り歩く・行列の遊び・出会いで高まる。賑やかなほど、遠くの妖怪が気付く">
+          <span class="mo-label">賑わい</span><span class="mo-bar"><i id="momentum-fill"></i></span><span id="momentum-name">静か</span>
+        </div>
+      </div>
+
+      <!-- 右上：刻とミニマップ -->
+      <div id="clock" class="washi-card">
+        <div class="clock-row"><span id="koku">戌の刻</span><span id="moon">🌕</span></div>
+        <div class="night-bar"><div id="night-fill"></div></div>
+      </div>
+      <canvas id="minimap" width="200" height="187"></canvas>
+
+      <!-- 目的地 -->
+      <div id="objective">
+        <span class="obj-label">今宵の目的地</span>
+        <span id="obj-text">夜明けまでに、北の山の神社へ</span>
+        <span id="obj-arrow">▲</span><span id="obj-dist"></span>
+      </div>
+
+      <div id="items">
+        <div id="dango" class="pill hidden">🍡 団子 <b id="dango-n">0</b></div>
+        <div id="river" class="pill hidden">川辺 <span class="meter"><i id="river-fill"></i></span></div>
+      </div>
+
+      <div id="activity" class="washi-card hidden">
+        <div id="act-title"></div>
+        <div class="act-bar"><div id="act-fill"></div></div>
+        <div id="act-count"></div>
+      </div>
+
+      <div id="toasts"></div>
+      <div id="join-cards"></div>
+      <div id="banner" class="hidden"><div class="banner-inner"><div id="banner-sub"></div><div id="banner-main"></div><div id="banner-text"></div></div></div>
+      <div id="hint" class="hidden"></div>
+      <div id="alert" class="hidden">！</div>
+      <div id="end-prompt" class="hidden">
+        <div>神社に着いた。今宵の百鬼夜行を奉納しますか？</div>
+        <button id="btn-end" class="fuda">奉納する（E）</button>
+        <div class="small">まだ寄り道もできる。夜明けまで歩いてもいい。</div>
+      </div>
+
+      <!-- 視点パッド：押している間、押した方をカメラが向く／寄る・引く -->
+      <div id="cam-pad" aria-label="視点">
+        <button class="fuda pad" data-key="ArrowLeft" title="左を見る（←）" aria-label="左を見る">◀</button>
+        <button class="fuda pad" data-key="ArrowUp" title="見上げる（↑）" aria-label="見上げる">▲</button>
+        <button class="fuda pad" data-key="ArrowRight" title="右を見る（→）" aria-label="右を見る">▶</button>
+        <button class="fuda pad" data-key="ZoomOut" title="引く（− / ホイール）" aria-label="引く">引</button>
+        <button class="fuda pad" data-key="ArrowDown" title="見下ろす（↓）" aria-label="見下ろす">▼</button>
+        <button class="fuda pad" data-key="ZoomIn" title="寄る（+ / ホイール）" aria-label="寄る">寄</button>
+      </div>
+
+      <div id="buttons">
+        <button id="btn-overview" class="fuda" title="俯瞰（Space）">俯瞰</button>
+        <button id="btn-run" class="fuda" title="走る（Shift）">走る</button>
+        <button id="btn-zukan" class="fuda" title="図鑑（Z）">図鑑</button>
+        <button id="btn-mute" class="fuda small" title="音（M）">音</button>
+      </div>
+      <div id="help">移動：WASD / クリック・長押し　走る：Shift　俯瞰：Space　見回す：矢印キー / 右ドラッグ　寄る・引く：ホイール / + −　図鑑：Z</div>
+    </div>
+
+    <!-- 図鑑（一体で横一列。上の帳は sticky。中身は presentation/zukan/ZukanBook） -->
+    <div id="zukan" class="overlay hidden">
+      <div class="scroll zk-book" id="zukan-book">
+        <header class="zk-toolbar">
+          <div class="zk-toolbar-top">
+            <h2>妖怪図鑑</h2>
+            <div id="zukan-seen"></div>
+            <button id="zukan-close" class="fuda small" type="button">閉じる</button>
+          </div>
+          <div class="zk-toolbar-row">
+            <label class="zk-search">
+              <span class="zk-search-label">名前で探す</span>
+              <input id="zukan-search" type="search" placeholder="名前・よみ・別名" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+            </label>
+            <button id="zukan-registered" class="zk-toggle" type="button" aria-pressed="false">登録済みのみ</button>
+          </div>
+          <nav class="zk-jump" aria-label="区分へ移る">
+            <button type="button" data-rank="normal">妖怪</button>
+            <button type="button" data-rank="greater">大妖怪</button>
+            <button type="button" data-rank="threeGreat">三大妖怪</button>
+          </nav>
+        </header>
+        <div id="zukan-grid" class="zukan-grid"></div>
+        <p id="zukan-empty" class="zk-empty" hidden>見つからない…</p>
+      </div>
+    </div>
+
+    <!-- 温泉宿「宵霞楼」（?onsen のときだけ使う。中身の仕組みは src/onsen/ を読み込んでから） -->
+    <div id="onsen-loading" class="overlay hidden"><div class="onsen-loading-inner"><div class="onsen-name-big">宵霞楼</div><div>妖たちが夜ごと集う、山あいの湯宿。</div></div></div>
+    <div id="onsen-ui" class="hidden">
+      <div id="onsen-hud">
+        <div id="onsen-card" class="washi-card"><div class="onsen-name">宵霞楼</div><div id="onsen-count"></div></div>
+        <div id="onsen-pad" aria-label="視点">
+          <button class="fuda pad" data-key="ArrowLeft" aria-label="左を見る">◀</button>
+          <button class="fuda pad" data-key="ArrowUp" aria-label="見上げる">▲</button>
+          <button class="fuda pad" data-key="ArrowRight" aria-label="右を見る">▶</button>
+          <button class="fuda pad" data-key="ZoomOut" aria-label="引く">引</button>
+          <button class="fuda pad" data-key="ArrowDown" aria-label="見下ろす">▼</button>
+          <button class="fuda pad" data-key="ZoomIn" aria-label="寄る">寄</button>
+        </div>
+        <div id="onsen-buttons">
+          <button id="onsen-mute" class="fuda" aria-label="音（M）">音</button>
+          <button id="onsen-zukan" class="fuda">図鑑</button>
+          <button id="onsen-photo" class="fuda">写真</button>
+          <button id="onsen-leave" class="fuda">宿を出る</button>
+        </div>
+        <button id="onsen-talk" class="fuda big hidden">話す</button>
+      </div>
+      <div id="onsen-dialog" class="washi-card hidden" role="dialog"><div id="onsen-dialog-name"></div><div id="onsen-dialog-text"></div><div class="onsen-dialog-next">▼</div></div>
+      <div id="onsen-note" class="hidden"><div id="onsen-note-main"></div><div id="onsen-note-sub"></div></div>
+      <div id="onsen-toast" class="hidden"></div>
+      <div id="onsen-photo-bar" class="hidden">
+        <div id="onsen-photo-pad" aria-label="カメラ">
+          <button class="fuda pad" data-key="ArrowLeft" aria-label="左へ回す">◀</button>
+          <button class="fuda pad" data-key="ArrowUp" aria-label="見上げる">▲</button>
+          <button class="fuda pad" data-key="ArrowRight" aria-label="右へ回す">▶</button>
+          <button class="fuda pad" data-key="ZoomOut" aria-label="引く">引</button>
+          <button class="fuda pad" data-key="ArrowDown" aria-label="見下ろす">▼</button>
+          <button class="fuda pad" data-key="ZoomIn" aria-label="寄る">寄</button>
+          <button class="fuda pad" data-key="PhotoLeft" aria-label="左へ動かす">左</button>
+          <button class="fuda pad" data-key="PhotoUp" aria-label="高く">高</button>
+          <button class="fuda pad" data-key="PhotoRight" aria-label="右へ動かす">右</button>
+          <button class="fuda pad" data-key="PhotoFwd" aria-label="前へ動かす">前</button>
+          <button class="fuda pad" data-key="PhotoDown" aria-label="低く">低</button>
+          <button class="fuda pad" data-key="PhotoBack" aria-label="後ろへ動かす">後</button>
+        </div>
+        <div id="onsen-photo-buttons">
+          <button id="onsen-photo-ui" class="fuda small">UI</button>
+          <button id="onsen-photo-back" class="fuda small">戻る</button>
+          <button id="onsen-shoot" class="fuda big shutter">撮る</button>
+        </div>
+      </div>
+      <button id="onsen-ui-back" class="fuda small" aria-label="UI を出す">UI</button>
+      <div id="onsen-leave-ask" class="overlay hidden">
+        <div class="scroll onsen-ask">
+          <div>宿を出ますか？</div>
+          <div class="small">次に来たときは、泊まっている客が変わります。</div>
+          <div class="result-buttons"><button id="onsen-leave-yes" class="fuda">宿を出る</button><button id="onsen-leave-no" class="fuda small">まだいる</button></div>
+        </div>
+      </div>
+      <div id="onsen-shot" class="overlay hidden">
+        <div class="scroll shot-scroll">
+          <img id="onsen-shot-img" alt="撮った写真" />
+          <div class="result-buttons">
+            <button id="onsen-shot-save" class="fuda">写真を保存</button>
+            <button id="onsen-shot-share" class="fuda">共有</button>
+            <button id="onsen-shot-close" class="fuda small">撮り直す</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- タイトル -->
+    <div id="title" class="overlay">
+      <div id="title-tools">
+        <button id="btn-title-mute" class="fuda small" title="音（M）" aria-label="音を消す">音</button>
+        <button id="btn-options" class="fuda small gear" title="設定" aria-label="設定">⚙</button>
+      </div>
+      <div class="title-inner">
+        <h1 class="title-logo">
+          <span class="title-jp">百鬼夜行</span>
+          <span class="title-yoi">～宵歩き～</span>
+          <span class="title-en">Night Parade: Evening Walk</span>
+        </h1>
+        <p class="title-lead">一匹の小さな妖怪から始まる、一夜の行進。<br />仲間を集め、自分だけの百鬼夜行を。</p>
+        <button id="btn-start" class="fuda big">夜道へ出る</button>
+        <button id="btn-onsen" class="fuda onsen-fuda hidden">宵霞楼</button>
+        <div id="title-onsen-note" class="hidden"></div>
+        <div id="loading">町を組み立てています…</div>
+        <div id="title-seed" class="hidden"></div>
+        <div class="title-help">WASD、またはタップ・長押しで歩く　矢印キー・2 本指で見回す</div>
+      </div>
+    </div>
+
+    <!-- 設定（タイトルの歯車） -->
+    <div id="options" class="overlay hidden">
+      <div class="scroll options-scroll">
+        <h2>設定</h2>
+        <label class="opt-row"><span>音量</span><input id="opt-volume" type="range" min="0" max="100" step="5" /><b id="opt-volume-v"></b></label>
+        <div class="opt-row"><span>絵巻雲（夜の間）</span>
+          <div class="seg" id="opt-clouds"><button class="fuda small" data-v="0">切</button><button class="fuda small" data-v="1">控えめ</button><button class="fuda small" data-v="2">標準</button></div>
+        </div>
+        <div class="opt-row"><span>画質</span>
+          <div class="seg" id="opt-quality"><button class="fuda small" data-v="0">軽量</button><button class="fuda small" data-v="1">標準</button></div>
+        </div>
+        <div class="opt-row"><span>建物の透過</span>
+          <div class="seg" id="opt-fade"><button class="fuda small" data-v="0">切</button><button class="fuda small" data-v="1">主人公とカメラ</button><button class="fuda small" data-v="2">百鬼夜行も</button></div>
+        </div>
+        <div class="opt-note">近くの家・木や、カメラと主人公の間をふさぐ建物を透かします。「百鬼夜行も」は行列のまわりの建物も透かします。</div>
+        <div class="opt-row opt-links">
+          <button id="btn-opt-zukan" class="fuda">図鑑</button>
+          <button id="btn-opt-history" class="fuda">これまでの夜（直近十夜）</button>
+          <button id="btn-opt-onsen" class="fuda onsen-fuda hidden">宵霞楼</button>
+        </div>
+        <div class="opt-help">
+          歩く：WASD／クリック・タップした場所へ／長押し　走る：Shift　見回す：矢印キー・右ドラッグ・2 本指<br />
+          寄る・引く：ホイール・ピンチ・＋−　俯瞰：Space　図鑑：Z　音：M
+        </div>
+        <button id="btn-options-close" class="fuda">閉じる</button>
+      </div>
+    </div>
+
+    <!-- 結果（第一画面は要点だけ） -->
+    <div id="result" class="overlay hidden">
+      <div class="scroll result-scroll">
+        <div class="result-head">今宵の百鬼夜行</div>
+        <div id="result-reason"></div>
+        <div class="result-count"><span id="result-kanji"></span><span class="yo">妖</span></div>
+        <div id="result-stage"></div>
+        <div id="result-score"></div>
+        <div id="result-lead"></div>
+        <div id="result-friend"></div>
+        <div id="result-hundredth" class="hidden"></div>
+        <div class="hanko big-hanko">百鬼</div>
+        <div class="result-buttons">
+          <button id="btn-r-view" class="fuda">百鬼夜行を眺める</button>
+          <button id="btn-r-photo" class="fuda">記念撮影</button>
+          <button id="btn-r-emaki" class="fuda">絵巻を見る</button>
+          <button id="btn-r-record" class="fuda">今夜の記録</button>
+        </div>
+        <div class="result-buttons sub">
+          <button id="btn-r-same" class="fuda small">同じ夜をもう一度</button>
+          <button id="btn-r-next" class="fuda small">次の夜</button>
+          <button id="btn-r-title" class="fuda small">タイトルへ戻る</button>
+          <button id="btn-r-onsen" class="fuda small onsen-fuda hidden">湯宿へ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 今夜の記録 -->
+    <div id="record" class="overlay hidden">
+      <div class="scroll record-scroll">
+        <h2>今夜の記録</h2>
+        <h3>今夜の思い出</h3>
+        <ol id="record-memories"></ol>
+        <h3>今夜の地図</h3>
+        <canvas id="record-map" width="480" height="448"></canvas>
+        <h3>数字で見る</h3>
+        <dl id="record-stats"></dl>
+        <div id="record-types"></div>
+        <h3>成立した役</h3>
+        <ul id="record-roles"></ul>
+        <div id="record-titles"></div>
+        <h3>百鬼値</h3>
+        <dl id="record-score"></dl>
+        <div id="record-seed"></div>
+        <button id="btn-record-close" class="fuda">閉じる</button>
+      </div>
+    </div>
+
+    <!-- 百鬼夜行絵巻 -->
+    <div id="emaki" class="overlay hidden">
+      <div class="emaki-frame">
+        <div class="emaki-title">百鬼夜行絵巻</div>
+        <div id="emaki-scroll"></div>
+        <button id="btn-emaki-close" class="fuda">巻き戻す</button>
+      </div>
+    </div>
+
+    <!-- これまでの夜（直近 10 件の結果） -->
+    <div id="history" class="overlay hidden">
+      <div class="scroll history-scroll">
+        <h2>これまでの夜</h2>
+        <ol id="history-list"></ol>
+        <button id="btn-history-close" class="fuda">閉じる</button>
+      </div>
+    </div>
+
+    <!-- 眺める -->
+    <div id="view-bar" class="hidden">
+      <button id="btn-view-back" class="fuda">結果に戻る</button>
+      <button id="btn-view-photo" class="fuda">記念撮影</button>
+    </div>
+
+    <!-- 記念撮影（フォトモード） -->
+    <div id="photo-ui" class="hidden">
+      <div id="photo-hint"></div>
+      <div id="photo-pad" aria-label="カメラ">
+        <button class="fuda pad" data-key="ArrowLeft" aria-label="左へ回す">◀</button>
+        <button class="fuda pad" data-key="ArrowUp" aria-label="見上げる">▲</button>
+        <button class="fuda pad" data-key="ArrowRight" aria-label="右へ回す">▶</button>
+        <button class="fuda pad" data-key="ZoomOut" aria-label="引く">引</button>
+        <button class="fuda pad" data-key="ArrowDown" aria-label="見下ろす">▼</button>
+        <button class="fuda pad" data-key="ZoomIn" aria-label="寄る">寄</button>
+        <button class="fuda pad" data-key="PhotoLeft" aria-label="左へ動かす">左</button>
+        <button class="fuda pad" data-key="PhotoUp" aria-label="高く">高</button>
+        <button class="fuda pad" data-key="PhotoRight" aria-label="右へ動かす">右</button>
+        <button class="fuda pad" data-key="PhotoFwd" aria-label="前へ動かす">前</button>
+        <button class="fuda pad" data-key="PhotoDown" aria-label="低く">低</button>
+        <button class="fuda pad" data-key="PhotoBack" aria-label="後ろへ動かす">後</button>
+      </div>
+      <div id="photo-bar">
+        <button id="ph-formation" class="fuda"></button>
+        <button id="ph-pose" class="fuda"></button>
+        <button id="ph-style" class="fuda"></button>
+        <button id="ph-preset" class="fuda"></button>
+        <button id="ph-face" class="fuda" aria-pressed="false"><small>体ごと</small>向き直る</button>
+        <button id="ph-look" class="fuda" aria-pressed="false"><small>視線</small>こっち向いて</button>
+        <button id="ph-fx" class="fuda"><small>演出</small>雲・花火…</button>
+        <button id="ph-ui" class="fuda small">UI</button>
+        <button id="ph-back" class="fuda small">戻る</button>
+        <button id="ph-shoot" class="fuda big shutter">撮る</button>
+      </div>
+      <div id="photo-fx" class="washi-card hidden">
+        <div id="fx-clouds-label"></div>
+        <div class="seg" id="fx-clouds"><button class="fuda small" data-v="0">切</button><button class="fuda small" data-v="1">控えめ</button><button class="fuda small" data-v="2">標準</button><button class="fuda small" data-v="3">豪華</button></div>
+        <div id="fx-hide-label">写真から隠す</div>
+        <div class="seg" id="fx-hide">
+          <button class="fuda small" data-hide="landmark" title="神社・寺・五重塔・鳥居・御神木">重要な建物</button>
+          <button class="fuda small" data-hide="building" title="家・長屋・提灯・屋台・墓">その他の建築物</button>
+          <button class="fuda small" data-hide="tree" title="林・町の木・竹林">木</button>
+          <button class="fuda small" data-hide="npc" title="行列以外の妖怪・人・犬">NPC</button>
+        </div>
+        <div class="seg">
+          <button class="fuda small" data-toggle="fireworks">花火</button>
+          <button class="fuda small" data-toggle="confetti">紙吹雪</button>
+          <button class="fuda small" data-toggle="kitsunebi">狐火</button>
+          <button class="fuda small" data-toggle="lanterns">提灯</button>
+        </div>
+        <button id="ph-fx-close" class="fuda small">閉じる</button>
+      </div>
+      <div id="photo-shot" class="overlay hidden">
+        <div class="scroll shot-scroll">
+          <img id="shot-img" alt="撮った写真" />
+          <div class="result-buttons">
+            <button id="shot-plain" class="fuda">写真を保存</button>
+            <button id="shot-card" class="fuda">文字入りで保存</button>
+            <button id="shot-share" class="fuda">共有</button>
+            <button id="shot-copy" class="fuda small">結果の文をコピー</button>
+            <button id="shot-close" class="fuda small">撮り直す</button>
+          </div>
+        </div>
+      </div>
+      <div id="photo-toast" class="hidden"></div>
+    </div>
+    <button id="ph-ui-back" class="fuda small" aria-label="UI を出す">UI</button>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

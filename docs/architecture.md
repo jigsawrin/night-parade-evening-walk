@@ -53,7 +53,7 @@
 | 世界の層（屋根・裏路地・妖怪船…） | `data/worldLayers.ts`、`WildYokai.activateLayer` |
 | 賑わい・気配・Pacing・Encounter・地区覚醒 | `game/FestivalSystems.ts`（まとめ役）と配下（`ParadeAttractionSystem`・`FestivalMomentum`・`NightPacingDirector`・`EncounterScheduler`・`EncounterDirector`・`encounters/*`・`DistrictAwakeningSystem`）、値は `data/encounters.ts`・`data/districts.ts`・`data/presences.ts` |
 | 行列の遊び（千本鳥居・太鼓橋…） | `data/activities.ts`、`game/Activities.ts` |
-| 主人公の移動入力（WASD・タップ・指のスライド） | `game/PlayerControl.ts`、`game/TapMove.ts`（タップ移動）、`core/TouchSteer.ts`（指のスライド）、`core/Input.ts`、印は `presentation/TouchSteerMark.ts`、iPhone のアプリ内ブラウザ（LINE など）で下へ滑らせるとウィンドウが下がるのを止めるのは `core/TouchLock.ts` |
+| 主人公の移動入力（WASD・タップ・指のスライド） | `game/PlayerControl.ts`、`game/TapMove.ts`（タップ移動）、`core/TouchSteer.ts`（指のスライド）、`core/Input.ts`、印は `presentation/TouchSteerMark.ts`、iPhone のアプリ内ブラウザ（LINE など）で下へ滑らせるとウィンドウが下がるのを止めるのは `core/TouchLock.ts`（LINE の中で開かれたら `openExternalBrowser=1` を付けて標準ブラウザで開き直す `lineExternalUrl` も） |
 | カメラ | `presentation/CameraDirector.ts` |
 | 夜の間の HUD（ヒント・「！」・ミニマップ） | `presentation/PlayHud.ts`、`presentation/UIDirector.ts`、`index.html`、`style.css` |
 | イベントへの演出（一言・音・光） | `presentation/ParadePresentationDirector.ts` |

@@ -6,7 +6,7 @@ import { HistoryUI } from "./presentation/HistoryUI";
 import { browserKV, loadHistory, loadLegendProgress, loadOnsenVisit } from "./core/SaveData";
 import { onsenAccess } from "./game/onsen/OnsenVisit";
 import { nightSearch } from "./game/after/nightUrl";
-import { installTouchLock } from "./core/TouchLock";
+import { installTouchLock, lineExternalUrl } from "./core/TouchLock";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -38,6 +38,8 @@ async function bootOnsen(canvas: HTMLCanvasElement) {
 }
 
 async function boot() {
+  const external = lineExternalUrl(navigator.userAgent, location.pathname, location.search, location.hash);
+  if (external) return void location.replace(external);
   installTouchLock();
   const canvas = $("game") as HTMLCanvasElement;
   if (new URLSearchParams(location.search).has(ONSEN_PARAM)) return bootOnsen(canvas);

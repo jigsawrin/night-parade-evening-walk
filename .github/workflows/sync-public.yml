@@ -1,0 +1,44 @@
+# 非公開の開発用リポジトリの main が更新されるたびに、中身を公開リポジトリ（night-parade-evening-walk）へ反映する。
+# 公開側の Pages ワークフローがそれを受けて試遊版を作り直す。
+# 認証は公開リポジトリ専用の書き込み用デプロイキー（シークレット PUBLIC_REPO_DEPLOY_KEY）。個人トークンは使わない。
+# 公開リポジトリには同じファイルがあるが、下の if で何もしない。
+name: sync-public
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sync-public
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: github.repository == 'jigsawrin/hyakki'
+    runs-on: ubuntu-latest
+    env:
+      GIT_SSH_COMMAND: ssh -i /home/runner/.ssh/id_public -o IdentitiesOnly=yes
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: private
+      - name: 公開リポジトリを取り出す
+        env:
+          DEPLOY_KEY: ${{ secrets.PUBLIC_REPO_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" | tr -d '\r' > ~/.ssh/id_public
+          chmod 600 ~/.ssh/id_public
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+          git clone git@github.com:jigsawrin/night-parade-evening-walk.git public
+      - name: 中身を揃えて push（差があるときだけ）
+        run: |
+          rsync -a --delete --exclude '/.git' private/ public/
+          cd public
+          git add -A
+          if git diff --cached --quiet; then echo "差分なし"; exit 0; fi
+          title="$(git -C ../private log -1 --format=%b | grep -m1 . || git -C ../private log -1 --format=%s)"
+          git config user.name jigsawrin
+          git config user.email "33714121+jigsawrin@users.noreply.github.com"
+          git commit -q -m "${title}（非公開版 $(git -C ../private rev-parse --short HEAD) の反映）"
+          git push origin HEAD:main

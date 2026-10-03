@@ -9,6 +9,8 @@
   </head>
   <body data-stage="solo">
     <canvas id="game"></canvas>
+    <!-- タッチで歩いているあいだだけ。置いた場所の輪と、今の指 -->
+    <div id="touch-steer" aria-hidden="true"><div class="ring"></div><div class="knob"></div></div>
 
     <div id="hud" class="hidden">
       <!-- 左上：百鬼夜行の数と夜行位 -->
@@ -190,7 +192,7 @@
         <div id="title-onsen-note" class="hidden"></div>
         <div id="loading">町を組み立てています…</div>
         <div id="title-seed" class="hidden"></div>
-        <div class="title-help">WASD、またはタップ・長押しで歩く　矢印キー・2 本指で見回す</div>
+        <div class="title-help">WASD、または指を滑らせた方へ歩く（上へ滑らせると奥へ）<br />短くタップすれば、その場所へ。見回すは矢印キー・もう一本の指・左下の札</div>
       </div>
     </div>
 
@@ -215,8 +217,8 @@
           <button id="btn-opt-onsen" class="fuda onsen-fuda hidden">宵霞楼</button>
         </div>
         <div class="opt-help">
-          歩く：WASD／クリック・タップした場所へ／長押し　走る：Shift　見回す：矢印キー・右ドラッグ・2 本指<br />
-          寄る・引く：ホイール・ピンチ・＋−　俯瞰：Space　図鑑：Z　音：M
+          歩く：WASD／クリックした場所へ／マウスは長押しでその方へ。指は、置いたところから滑らせた方へ（上へ滑らせると奥へ）。短くタップすれば、その場所へ<br />
+          走る：Shift　見回す：矢印キー・右ドラッグ・もう一本の指（歩きながらでも）・左下の視点　寄る・引く：ホイール・ピンチ・＋−　俯瞰：Space　図鑑：Z　音：M
         </div>
         <button id="btn-options-close" class="fuda">閉じる</button>
       </div>

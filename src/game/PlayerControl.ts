@@ -3,10 +3,12 @@ import type { Input } from "../core/Input";
 import type { CameraDirector } from "../presentation/CameraDirector";
 import type { VFXDirector } from "../presentation/VFXDirector";
 import type { Player } from "./Player";
+import { steerAxes } from "../core/TouchSteer";
 import { tapMoveStep, type TapTarget } from "./TapMove";
 
 /**
- * 主人公の移動入力：WASD（カメラの向き基準）・タップした場所へ歩く・長押しで押している方へ。
+ * 主人公の移動入力：WASD（カメラの向き基準）・タップした場所へ歩く・マウス長押しで押している方へ。
+ * タッチは、指を置いた場所から滑らせた方へ（画面の上へ滑らせると奥へ）。
  * 矢印キーはカメラ専用なので、ここでは読まない。
  */
 export class PlayerControl {
@@ -36,8 +38,11 @@ export class PlayerControl {
     const rx = fz, rz = -fx;
     let mx = fx * iz + rx * ix;
     let mz = fz * iz + rz * ix;
-    // タップ：その場所まで歩いていく（キー操作・長押しで上書き）
-    if (inp.tap) {
+    // タッチ：置いた場所から滑らせた方へ（画面の上 = カメラの前）。指の位置そのものへは歩かない
+    const steer = inp.touchSteer ? steerAxes(inp.touchSteer.x, inp.touchSteer.y) : null;
+    const steering = !!steer && (steer.ix !== 0 || steer.iz !== 0);
+    // タップ：その場所まで歩いていく（キー操作・マウスの長押し・指を置いている間は上書き）
+    if (inp.tap && !inp.touchSteer) {
       const g = this.pickGround(inp.tap.x, inp.tap.y);
       inp.tap = null;
       if (g) {
@@ -47,29 +52,34 @@ export class PlayerControl {
         this.moveTarget = { x: this.player.x + dx * k, z: this.player.z + dz * k, stuck: 0, lastD: Infinity };
         this.vfx.burst("glint", this.moveTarget.x, 0.4, this.moveTarget.z, 4);
       }
-    }
-    if (ix !== 0 || iz !== 0 || inp.pointerDown) this.moveTarget = null;
-    const mt = this.moveTarget;
-    if (mt) {
-      const dx = mt.x - this.player.x, dz = mt.z - this.player.z;
-      const d = Math.hypot(dx, dz);
-      // 着いた、または壁などで進めなくなったらやめる（実時間で判定：フレームレートに依らない）
-      if (!tapMoveStep(mt, d, dt)) this.moveTarget = null;
-      else {
-        const s = Math.min(1, d / 2.5);
-        mx = (dx / d) * s;
-        mz = (dz / d) * s;
-      }
-    }
-    if (inp.pointerDown && ix === 0 && iz === 0) {
-      const g = this.pickGround(inp.pointerX, inp.pointerY);
-      if (g) {
-        const dx = g.x - this.player.x, dz = g.z - this.player.z;
+    } else if (inp.tap) inp.tap = null;
+    if (ix !== 0 || iz !== 0 || inp.pointerDown || inp.touchSteer) this.moveTarget = null;
+    if (steering && steer) {
+      mx = fx * steer.iz + rx * steer.ix;
+      mz = fz * steer.iz + rz * steer.ix;
+    } else {
+      const mt = this.moveTarget;
+      if (mt) {
+        const dx = mt.x - this.player.x, dz = mt.z - this.player.z;
         const d = Math.hypot(dx, dz);
-        if (d > 0.8) {
-          const s = Math.min(1, d / 3);
+        // 着いた、または壁などで進めなくなったらやめる（実時間で判定：フレームレートに依らない）
+        if (!tapMoveStep(mt, d, dt)) this.moveTarget = null;
+        else {
+          const s = Math.min(1, d / 2.5);
           mx = (dx / d) * s;
           mz = (dz / d) * s;
+        }
+      }
+      if (!inp.touchSteer && inp.pointerDown && ix === 0 && iz === 0) {
+        const g = this.pickGround(inp.pointerX, inp.pointerY);
+        if (g) {
+          const dx = g.x - this.player.x, dz = g.z - this.player.z;
+          const d = Math.hypot(dx, dz);
+          if (d > 0.8) {
+            const s = Math.min(1, d / 3);
+            mx = (dx / d) * s;
+            mz = (dz / d) * s;
+          }
         }
       }
     }

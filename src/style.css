@@ -39,6 +39,34 @@ html, body {
   outline: none;
   touch-action: none;
 }
+/* タッチの歩き：指を置いた場所の輪（指が離れると消える。常設のスティックは置かない） */
+#touch-steer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+  display: none;
+}
+#touch-steer.on { display: block; }
+#touch-steer .ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 196, 120, 0.38);
+  box-shadow: 0 0 14px rgba(255, 170, 80, 0.22);
+}
+#touch-steer .knob {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: rgba(255, 214, 150, 0.72);
+  box-shadow: 0 0 10px rgba(255, 180, 90, 0.55);
+}
 .hidden { display: none !important; }
 
 .washi-card {
@@ -370,7 +398,7 @@ body[data-stage="hyakki"] #counter { box-shadow: 0 3px 0 rgba(90, 60, 30, 0.25),
   text-shadow: 0 2px 10px #000;
 }
 .title-lead { font-size: 16px; line-height: 1.9; margin: 8px 0 28px; }
-.title-help { margin-top: 18px; font-size: 12px; color: #c8bfa8; }
+.title-help { margin-top: 18px; font-size: 12px; line-height: 1.7; color: #c8bfa8; padding: 0 18px; }
 #loading { margin-top: 14px; font-size: 13px; color: #d8c8a0; }
 
 .result-scroll { min-width: min(92vw, 520px); position: relative; }

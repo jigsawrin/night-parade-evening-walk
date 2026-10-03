@@ -1,8 +1,8 @@
 /**
  * キーボード + ポインタ（マウス / タッチ）。
- *  - 1 本指（左クリック）長押し：押している方へ歩く
- *  - 1 本指タップ（左クリック）：その場所まで歩いていく
- *  - 2 本指：ピンチで寄る・引く、2 本指ドラッグで見回す（ドラッグした方を向く）
+ *  - マウス左：タップでその場所まで歩く。長押しで押している方へ歩く
+ *  - タッチ：置いた場所から滑らせた方へ歩く（画面の上へ滑らせると奥へ）。短いタップはその場所まで
+ *  - タッチのもう一本：ドラッグで見回す。二本の間隔で寄る・引く（歩きの指は置いたまま同時にできる）
  *  - 右ドラッグ：見回す（ドラッグした方を向く）、ホイール：寄る・引く
  */
 export class Input {
@@ -17,17 +17,31 @@ export class Input {
   pitchDelta = 0;
   /** ホイール・ピンチでの距離の変化（+ で引く） */
   zoomDelta = 0;
-  /** 1 本指・左ドラッグの量（撮影ではカメラを回す。夜の間は使わない：歩く操作のまま） */
+  /** 1 本指・左ドラッグの量（撮影ではカメラを回す。夜の間のタッチは歩きに使う） */
   dragYaw = 0;
   dragPitch = 0;
   /** 短いタップ（その場所へ歩いていく）。読んだら null に戻す */
   tap: { x: number; y: number } | null = null;
+  /**
+   * タッチで歩いている指。x・y は置いた場所からのずれ（右・下が +、CSS px）。
+   * ox・oy は置いた場所。マウスでは null。指が離れると null。
+   */
+  touchSteer: { x: number; y: number; ox: number; oy: number } | null = null;
   private dragButton = -1;
   private lastX = 0;
   private lastY = 0;
   private touches = new Map<number, { x: number; y: number }>();
-  private gesture = false;
-  private gestureDist = 0;
+  /** 歩きの指（最初の一本） */
+  private steerId: number | null = null;
+  private steerOriginX = 0;
+  private steerOriginY = 0;
+  private steerLastX = 0;
+  private steerLastY = 0;
+  /** この押し始めは、短いタップとしてよいか（もう一本が乗ったらだめ） */
+  private steerTapOk = false;
+  /** 見回す指（二本目）。二本のあいだは、歩きの量を保ったまま中点で見回し、間隔で寄る・引く */
+  private lookId: number | null = null;
+  private pinchDist = 0;
   private gestureMidX = 0;
   private gestureMidY = 0;
   private downT = 0;
@@ -47,7 +61,7 @@ export class Input {
       this.keys.clear();
       this.pointerDown = false;
       this.touches.clear();
-      this.gesture = false;
+      this.clearTouch();
     });
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
     canvas.addEventListener(
@@ -65,12 +79,8 @@ export class Input {
         /* 合成イベント等では捕捉できないことがある */
       }
       this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (this.touches.size >= 2) {
-        // 2 本指：歩くのをやめて、見回す・寄る引くのジェスチャーへ
-        this.pointerDown = false;
-        this.gesture = true;
-        this.tap = null;
-        this.readGesture(true);
+      if (e.pointerType === "touch") {
+        this.onTouchDown(e);
         return;
       }
       this.dragButton = e.button;
@@ -87,8 +97,8 @@ export class Input {
     });
     canvas.addEventListener("pointermove", (e) => {
       if (this.touches.has(e.pointerId)) this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (this.gesture) {
-        if (this.touches.size >= 2) this.readGesture(false);
+      if (e.pointerType === "touch") {
+        this.onTouchMove(e);
         return;
       }
       this.pointerX = e.clientX;
@@ -107,15 +117,11 @@ export class Input {
     });
     const up = (e: PointerEvent) => {
       this.touches.delete(e.pointerId);
-      if (this.gesture) {
-        // 指がすべて離れるまで、歩き出さない
-        if (this.touches.size === 0) this.gesture = false;
-        else if (this.touches.size >= 2) this.readGesture(true);
-        this.pointerDown = false;
-        this.dragButton = -1;
+      if (e.pointerType === "touch") {
+        this.onTouchUp(e);
         return;
       }
-      // 短いタップは「そこへ歩いていく」
+      // 短いクリックは「そこへ歩いていく」
       if (
         e.type === "pointerup" && this.dragButton === 0 && performance.now() - this.downT < 260 &&
         Math.hypot(e.clientX - this.downX, e.clientY - this.downY) < 14
@@ -129,19 +135,131 @@ export class Input {
     canvas.addEventListener("pointercancel", up);
   }
 
-  /** 2 本指：ピンチ = 寄る・引く、中点のドラッグ = 見回す */
-  private readGesture(reset: boolean) {
-    const [a, b] = [...this.touches.values()];
-    const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    if (!reset) {
-      this.zoomDelta += Math.log(this.gestureDist / d);
-      this.yawDelta -= (mx - this.gestureMidX) * 0.006;
-      this.pitchDelta -= (my - this.gestureMidY) * 0.004;
+  /** 最初の指は歩き、二本目は見回す。歩きながら見回せる */
+  private onTouchDown(e: PointerEvent) {
+    if (this.steerId === null) {
+      this.steerId = e.pointerId;
+      this.steerOriginX = e.clientX;
+      this.steerOriginY = e.clientY;
+      this.steerLastX = e.clientX;
+      this.steerLastY = e.clientY;
+      this.downT = performance.now();
+      this.downX = e.clientX;
+      this.downY = e.clientY;
+      this.steerTapOk = this.lookId === null;
+      this.touchSteer = { x: 0, y: 0, ox: e.clientX, oy: e.clientY };
+      if (this.lookId !== null) this.armTwoFinger();
+      return;
     }
-    this.gestureDist = d;
-    this.gestureMidX = mx;
-    this.gestureMidY = my;
+    if (this.lookId === null) {
+      this.lookId = e.pointerId;
+      this.steerTapOk = false;
+      this.tap = null;
+      this.armTwoFinger();
+    }
+  }
+
+  private onTouchMove(e: PointerEvent) {
+    if (e.pointerId !== this.steerId && e.pointerId !== this.lookId) return;
+    // 二本：歩きは置いたときのスライドのまま。中点のドラッグで見回し、間隔で寄る・引く
+    if (this.steerId !== null && this.lookId !== null) {
+      this.applyTwoFinger();
+      return;
+    }
+    if (e.pointerId !== this.steerId) return;
+    const fdx = e.clientX - this.steerLastX;
+    const fdy = e.clientY - this.steerLastY;
+    this.steerLastX = e.clientX;
+    this.steerLastY = e.clientY;
+    this.touchSteer = {
+      x: e.clientX - this.steerOriginX,
+      y: e.clientY - this.steerOriginY,
+      ox: this.steerOriginX,
+      oy: this.steerOriginY,
+    };
+    // 撮影中は一本の指でカメラを回す（夜の間は Game が dragYaw を使わない）
+    this.dragYaw -= fdx * 0.006;
+    this.dragPitch -= fdy * 0.004;
+  }
+
+  private onTouchUp(e: PointerEvent) {
+    if (e.pointerId === this.steerId) {
+      if (
+        this.steerTapOk && e.type === "pointerup" && performance.now() - this.downT < 260 &&
+        Math.hypot(e.clientX - this.downX, e.clientY - this.downY) < 14
+      ) {
+        this.tap = { x: e.clientX, y: e.clientY };
+      }
+      this.steerId = null;
+      this.touchSteer = null;
+      this.pinchDist = 0;
+      return;
+    }
+    if (e.pointerId === this.lookId) {
+      this.lookId = null;
+      this.pinchDist = 0;
+      // 二本のあいだに指がずれていても、歩きの量はそのまま。輪は今の指に合わせる
+      this.reseatSteer();
+    }
+  }
+
+  /** 今の指の位置を、今の歩きの量のまま起点に合わせ直す（輪が指から離れない） */
+  private reseatSteer() {
+    if (this.steerId === null || !this.touchSteer) return;
+    const p = this.touches.get(this.steerId);
+    if (!p) return;
+    this.steerOriginX = p.x - this.touchSteer.x;
+    this.steerOriginY = p.y - this.touchSteer.y;
+    this.steerLastX = p.x;
+    this.steerLastY = p.y;
+    this.touchSteer = { x: this.touchSteer.x, y: this.touchSteer.y, ox: this.steerOriginX, oy: this.steerOriginY };
+  }
+
+  private clearTouch() {
+    this.steerId = null;
+    this.lookId = null;
+    this.touchSteer = null;
+    this.pinchDist = 0;
+    this.steerTapOk = false;
+  }
+
+  private armTwoFinger() {
+    this.pinchDist = this.fingerDist();
+    const mid = this.fingerMid();
+    this.gestureMidX = mid.x;
+    this.gestureMidY = mid.y;
+  }
+
+  /** 二本指：中点で見回す、間隔で寄る・引く（広がると寄る。以前と同じ） */
+  private applyTwoFinger() {
+    const d = this.fingerDist();
+    const mid = this.fingerMid();
+    if (this.pinchDist > 0 && d > 0) this.zoomDelta += Math.log(this.pinchDist / d);
+    this.yawDelta -= (mid.x - this.gestureMidX) * 0.006;
+    this.pitchDelta -= (mid.y - this.gestureMidY) * 0.004;
+    this.pinchDist = d;
+    this.gestureMidX = mid.x;
+    this.gestureMidY = mid.y;
+  }
+
+  private fingerPair() {
+    if (this.steerId === null || this.lookId === null) return null;
+    const a = this.touches.get(this.steerId);
+    const b = this.touches.get(this.lookId);
+    if (!a || !b) return null;
+    return [a, b] as const;
+  }
+
+  private fingerDist() {
+    const pair = this.fingerPair();
+    if (!pair) return 0;
+    return Math.hypot(pair[0].x - pair[1].x, pair[0].y - pair[1].y) || 1;
+  }
+
+  private fingerMid() {
+    const pair = this.fingerPair();
+    if (!pair) return { x: 0, y: 0 };
+    return { x: (pair[0].x + pair[1].x) / 2, y: (pair[0].y + pair[1].y) / 2 };
   }
 
   down(...codes: string[]) {

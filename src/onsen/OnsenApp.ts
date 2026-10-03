@@ -9,6 +9,7 @@ import { Input } from "../core/Input";
 import { Materials } from "../world/Materials";
 import { Player } from "../game/Player";
 import { PlayerControl } from "../game/PlayerControl";
+import { TouchSteerMark } from "../presentation/TouchSteerMark";
 import { discoverHidden } from "../game/legends/LegendProgress";
 import { isZukanSeen } from "../game/ZukanRules";
 import { beginVisit, firstDiscoveriesNow, leaveVisit, onsenAccess, openZones, visitGuests } from "../game/onsen/OnsenVisit";
@@ -99,6 +100,7 @@ export async function startOnsen(canvas: HTMLCanvasElement, opts: OnsenOptions) 
   const input = new Input(canvas);
   const player = new Player(factory, world, ONSEN_START.x, ONSEN_START.z);
   const control = new PlayerControl(input, canvas, scene, camera, player, { burst: () => {} });
+  const steerMark = new TouchSteerMark();
   const inn = new OnsenGuests(factory, placements);
   const book = new ZukanBook();
   // 湯に入る：ゆっくり歩き、しばらく浸かると顔がほんのり赤く
@@ -300,6 +302,7 @@ export async function startOnsen(canvas: HTMLCanvasElement, opts: OnsenOptions) 
       if (inp.hit("KeyZ")) ui.toast("図鑑は右下の札から");
     }
     player.update(dt, t, mx, mz, inp.down("ShiftLeft", "ShiftRight"));
+    steerMark.sync(!photo && !zukanOpen && !talkingTo, input.touchSteer);
     // 階と階段：上る階段に近づいたら上の階を用意し、見せるのは今いる階とその下だけ
     const lv = world.updateLevel(player.x, player.z);
     for (const n of floorsToPrepare(lv, player.x, player.z)) world.buildFloor(n);

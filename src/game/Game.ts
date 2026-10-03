@@ -43,6 +43,7 @@ import { AfterNightDirector } from "../presentation/AfterNightDirector";
 import { StructureVisibilityDirector } from "../presentation/StructureVisibilityDirector";
 import { OnmyojiDirector } from "../presentation/OnmyojiDirector";
 import { PlayHud } from "../presentation/PlayHud";
+import { TouchSteerMark } from "../presentation/TouchSteerMark";
 import { addZukan, browserKV, loadZukan, pushHistory } from "../core/SaveData";
 
 const params = new URLSearchParams(location.search);
@@ -100,10 +101,11 @@ export class Game {
   camera!: CameraDirector;
   atmos!: WorldAtmosphereDirector;
   director!: ParadePresentationDirector;
-  /** 主人公の移動入力（WASD・タップ・長押し） */
+  /** 主人公の移動入力（WASD・タップ・指のスライド） */
   control!: PlayerControl;
   /** 夜の間の HUD（ヒント・「！」・ミニマップ） */
   hud!: PlayHud;
+  private steerMark = new TouchSteerMark();
 
   stage: StageDef = STAGES[0];
   overview = false;
@@ -479,6 +481,7 @@ export class Game {
     if (this.music) this.music.dawn = this.atmos.dawn;
 
     if (this.state === "play") this.hud.update(dt);
+    this.steerMark.sync(this.state === "play", this.input.touchSteer);
     if (this.state !== "title") this.debug?.overlay(dt);
     if (this.audio && this.state !== "title") {
       const near: SeKey[] = [];

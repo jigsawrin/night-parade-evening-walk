@@ -32,10 +32,13 @@ export class DebugTools {
     if (inp.hit("KeyH")) g.fireworks.show(3);
   }
 
-  /** 画面上部の表示（0.25 秒ごと） */
+  /** 画面上部の表示（0.25 秒ごと。隠したあとは、次の更新を待たずに戻す） */
   overlay(dt: number) {
     this.t -= dt;
-    if (this.t > 0) return;
+    if (this.t > 0) {
+      this.game.ui.revealDebug();
+      return;
+    }
     this.t = 0.25;
     const g = this.game;
     g.ui.debug([

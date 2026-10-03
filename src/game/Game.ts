@@ -335,7 +335,10 @@ export class Game {
   // ------------------------------------------------------------------ ループ
   private frame() {
     const dt = Math.min(0.05, this.engine.getDeltaTime() / 1000 || 0.016);
+    // 図鑑を開いている間は update を止める。Z は一度だけここで受ける（update 側と重ねると、同じ打鍵で開いてすぐ閉じてしまう）
+    if ((this.state === "play" || this.paused) && this.input.hit("KeyZ")) this.toggleZukan();
     if (!this.paused) this.update(dt);
+    else this.ui.hideDebug();
     this.input.endFrame();
     this.scene.render();
   }
@@ -349,7 +352,6 @@ export class Game {
     if (inp.hit("KeyM")) this.toggleMute();
     if (this.state === "play") {
       if (inp.hit("Space", "Tab")) this.toggleOverview();
-      if (inp.hit("KeyZ")) this.toggleZukan();
       this.debug?.keys(this.t);
     }
 
@@ -482,7 +484,9 @@ export class Game {
 
     if (this.state === "play") this.hud.update(dt);
     this.steerMark.sync(this.state === "play", this.input.touchSteer);
-    if (this.state !== "title") this.debug?.overlay(dt);
+    // デバッグ表示は夜のプレイ中だけ。締め・結果・眺める・撮影・図鑑（停止中）には出さない
+    if (this.debug && this.state === "play") this.debug.overlay(dt);
+    else this.ui.hideDebug();
     if (this.audio && this.state !== "title") {
       const near: SeKey[] = [];
       for (const f of this.parade.followers) {

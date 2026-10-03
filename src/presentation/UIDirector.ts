@@ -82,14 +82,22 @@ export class UIDirector {
     if (this.pings.length > 8) this.pings.shift();
   }
 
-  /** ?debug 時のオーバーレイ */
+  /** ?debug 時のオーバーレイ（夜のプレイ中だけ。図鑑・結果・眺める・撮影には被せない） */
   debug(lines: string[]) {
     if (!this.debugEl) {
       this.debugEl = document.createElement("div");
       this.debugEl.id = "debug";
       document.body.appendChild(this.debugEl);
     }
+    this.debugEl.classList.remove("hidden");
     this.debugEl.textContent = lines.join("\n");
+  }
+  hideDebug() {
+    this.debugEl?.classList.add("hidden");
+  }
+  /** 文言の更新を待たずに、隠したデバッグ表示を戻す */
+  revealDebug() {
+    this.debugEl?.classList.remove("hidden");
   }
 
   setTheme(stage: StageDef) {

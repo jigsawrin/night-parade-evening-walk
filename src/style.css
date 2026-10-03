@@ -446,8 +446,9 @@ body[data-stage="hyakki"] #counter { box-shadow: 0 3px 0 rgba(90, 60, 30, 0.25),
 #result-seed { font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
 #debug {
   position: absolute; left: 50%; top: 6px; transform: translateX(-50%); max-width: min(92vw, 760px);
+  max-height: 34vh; overflow: hidden;
   background: rgba(10, 8, 20, 0.72); color: #cfe; font: 11px/1.45 monospace; padding: 6px 10px; border-radius: 4px;
-  white-space: pre-wrap; pointer-events: none; z-index: 50;
+  white-space: pre-wrap; pointer-events: none; z-index: 8;
 }
 
 /* ---- 視点パッド（寄る・引く・見回す） ---- */
@@ -530,7 +531,7 @@ body[data-stage="hyakki"] #counter { box-shadow: 0 3px 0 rgba(90, 60, 30, 0.25),
   .big-hanko { width: 48px; height: 48px; font-size: 17px; right: 14px; top: 14px; }
   .result-buttons { flex-wrap: wrap; }
   .title-lead { font-size: 14px; }
-  #debug { font-size: 9px; top: calc(env(safe-area-inset-top) + 190px); }
+  #debug { font-size: 9px; top: calc(env(safe-area-inset-top) + 148px); max-height: 22vh; max-width: min(92vw, 340px); }
 }
 
 /* ======================================================================

@@ -1,4 +1,5 @@
 # main へ push するたびに、ビルドした dist/ を GitHub Pages へ公開する（テスター向けの試遊版）
+# 公開リポジトリ（night-parade-evening-walk）でだけ動かす。非公開の開発用リポジトリには同じファイルを置くが、何もしない
 name: pages
 on:
   push:
@@ -13,6 +14,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    if: github.repository == 'jigsawrin/night-parade-evening-walk'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -6,6 +6,7 @@ import { HistoryUI } from "./presentation/HistoryUI";
 import { browserKV, loadHistory, loadLegendProgress, loadOnsenVisit } from "./core/SaveData";
 import { onsenAccess } from "./game/onsen/OnsenVisit";
 import { nightSearch } from "./game/after/nightUrl";
+import { installTouchLock } from "./core/TouchLock";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -37,6 +38,7 @@ async function bootOnsen(canvas: HTMLCanvasElement) {
 }
 
 async function boot() {
+  installTouchLock();
   const canvas = $("game") as HTMLCanvasElement;
   if (new URLSearchParams(location.search).has(ONSEN_PARAM)) return bootOnsen(canvas);
   const startBtn = $("btn-start") as HTMLButtonElement;

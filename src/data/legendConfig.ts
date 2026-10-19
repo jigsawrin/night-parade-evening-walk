@@ -31,8 +31,7 @@ export const RANK_INFO: Record<LegendRank, RankInfo> = {
 
 /**
  * 今夜の候補（NightLegendRoster）の数。一夜の始まりに ?seed= から選ぶ。候補に入らなかった妖怪は今夜は町に現れない。
- * 今は大妖怪が大天狗だけ・三大妖怪が酒呑童子だけなので、どちらも毎晩いる（今までと同じ遊び）。
- * 将来の目安：大妖怪 2〜3 種類、三大妖怪 0〜1 種類（threeGreat を { min: 0, max: 1 } に）。
+ * 大妖怪は 2〜3 種、三大妖怪は 1 種。三体が揃ったあとの三大妖怪 0〜1 は、遊んで決めるまで { min: 1, max: 1 } のまま。
  */
 export const NIGHT_ROSTER: RosterConfig = {
   greater: { min: 2, max: 3 },
@@ -82,7 +81,7 @@ export const HIDDEN_DISCOVERIES: Record<string, HiddenDiscoveryDef> = {
 export const LEGEND_OMEN_WEIGHT = 1;
 
 /**
- * 縁帳から開く特別な場所（温泉宿…まだ場所そのものは無い）。旅館に「入れるか」だけ。誰がいるかは OnsenGuestRoster。
+ * 縁帳から開く宵霞楼の区域。ここでは「入れるか」だけ。誰がいるかは OnsenGuestRoster。宿そのものは src/onsen/。
  * anyOf のどれか一つを満たせば開く。一つの条件の中はすべて満たす。
  *  greater・threeGreat：縁を結んだ（一度でも仲間にした）格ごとの種類の数
  *  hiddenDiscovered：会った隠し妖怪の種類の数／hiddenJoined：仲間にした隠し妖怪の種類の数（格とは別の軸）

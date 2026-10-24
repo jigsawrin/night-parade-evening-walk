@@ -12,6 +12,10 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: true
+# JavaScript Actionsも修正版Node24で実行する。各jobの先頭で配置・照合。
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   deploy:
     if: github.repository == 'jigsawrin/night-parade-evening-walk'
@@ -20,15 +24,50 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Action用Node.js修正版を公式配布から配置
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # 旧ランナー同梱Nodeを起動する前に、公式修正版をハッシュ照合して配置する。
+          $workers = @(Get-Process -Name 'Runner.Worker' -ErrorAction Stop)
+          if ($workers.Count -ne 1 -or -not $workers[0].Path) { throw 'Cannot identify the job runner' }
+          $runnerRoot = Split-Path (Split-Path $workers[0].Path -Parent) -Parent
+          if ($env:RUNNER_ARCH -ne 'X64') { throw 'Only hosted X64 runners are supported' }
+          if ($env:RUNNER_OS -eq 'Windows') {
+            $archive = 'node-v24.22.1-win-x64.zip'
+            $expected = 'd2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5'
+            $relativeBinary = 'node-v24.22.1-win-x64/node.exe'
+            $target = Join-Path $runnerRoot 'externals/node24/bin/node.exe'
+          } elseif ($env:RUNNER_OS -eq 'Linux') {
+            $archive = 'node-v24.22.1-linux-x64.tar.xz'
+            $expected = '6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6'
+            $relativeBinary = 'node-v24.22.1-linux-x64/bin/node'
+            $target = Join-Path $runnerRoot 'externals/node24/bin/node'
+          } else { throw 'Unsupported runner OS' }
+          if (-not (Test-Path -LiteralPath $target -PathType Leaf)) { throw 'Bundled Node24 path is missing' }
+          $staging = Join-Path $env:RUNNER_TEMP ('patched-node-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $staging | Out-Null
+          $download = Join-Path $staging $archive
+          Invoke-WebRequest -Uri ('https://nodejs.org/dist/v24.22.1/' + $archive) -OutFile $download -TimeoutSec 120
+          if ((Get-FileHash -LiteralPath $download -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Node archive SHA256 mismatch' }
+          if ($env:RUNNER_OS -eq 'Windows') { Expand-Archive -LiteralPath $download -DestinationPath $staging }
+          else {
+            tar -xJf $download -C $staging
+            if ($LASTEXITCODE -ne 0) { throw 'Node archive extraction failed' }
+          }
+          Copy-Item -LiteralPath (Join-Path $staging $relativeBinary) -Destination $target -Force
+          $actual = & $target -p 'process.versions.node'
+          if ($LASTEXITCODE -ne 0 -or $actual -cne '24.22.1') { throw 'Patched action runtime verification failed' }
+          Write-Host ('Action runtime: Node.js ' + $actual)
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.22.1'
           cache: npm
       - run: npm ci
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

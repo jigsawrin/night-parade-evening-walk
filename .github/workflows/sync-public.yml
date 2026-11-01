@@ -18,7 +18,8 @@ env:
 
 jobs:
   sync:
-    if: github.repository == 'jigsawrin/hyakki'
+    # セキュリティ保守のskip-ciコミットでは、非公開差分を公開同期しない。
+    if: github.repository == 'jigsawrin/hyakki' && !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ubuntu-latest
     env:
       GIT_SSH_COMMAND: ssh -i /home/runner/.ssh/id_public -o IdentitiesOnly=yes

@@ -30,23 +30,23 @@
 - 実行時の依存は `@babylonjs/core` と `@babylonjs/loaders` だけ。増やすときは相談。
 - モデル・音・テクスチャは手続き生成。素材を足すときは `public/` と `LICENSES/`。フォントは `src/assets/fonts/`。画面の文言を足したら `npm run fonts`。
 - 約束は `tests/assets.test.ts`（外部 URL なし、依存は Babylon だけ、600 行まで、フォントの字）。
-- Babylon は `src/core/babylon.ts` からだけ import。撮影・GLB は動的 import。最初の JS 1400KB、フォント 2000KB まで。フォント上限は上げない。
-- 400 行で分割を考え、600 行超はテストが失敗。100 行未満の断片は増やさない。値は `data/`、判定は `*Rules.ts`、状態はクラス、絵と音は Director。`Game.ts` は組み立てと毎フレームの順だけ。
+- Babylon は `src/core/babylon.ts` からだけ import。撮影・GLB は動的 import。最初の JS 1400KB、フォント 2000KB まで。フォント上限は上げない。import を変えたら製品ビルド（`npm run preview`）でも動作を確かめる。
+- 400 行で分割を考え、600 行超はテストが失敗。100 行未満の断片は増やさない。値は `data/`、判定は `*Rules.ts`、状態はクラス、絵と音は Director。`Game.ts` は組み立てと毎フレームの順だけ。大きい既存ファイルに足すときは、先に architecture の「次に分けるなら」に沿って切り出す。
 - 死んだコード・古いコメント・`console.log` は残さない。構成を変えたら architecture の地図を直す。
 
 ## コードの約束
 
 - ルールは `GameBus` にイベントを流すだけ。DOM・音・UI は Director。演出はゲームの状態を変えない。
 - 判定は低頻度（0.25〜1 秒）＋キャッシュ。キャラは Actor（InstancedMesh）を使い回す。
-- テストは `node --test`。実行時に Babylon・DOM を読まない。enum を使わない。
+- テストは `node --test`。実行時に Babylon・DOM を読まない。enum とパラメータプロパティを使わない（Node の型除去で動かすため）。拡張子なしの相対 import は `tests/support/resolve-ts.mjs` が解決する。
 - Encounter は complete / expired のどちらでも `dispose()`。一時資源は `OwnedResources`。行列へ渡した Actor は `release()`。
 - 陰陽師は `game/onmyoji/`。祓われた妖怪は `WildYokai.rehome`（戻るときは rejoin）。大妖怪以上は祓われない。子供・犬（`ParadeTagalongs`）は行列に入れない。
 - 妖怪は格（`rank`: normal / greater / threeGreat）と発見（`discovery`: normal / hidden）を混ぜない。隠しは格ではない。「上級」「boss」は使わない。
-- 大妖怪・三大妖怪・隠しは `game/legends/` と `data/legendYokai.ts`。`spawnWild`・`spawnBonus`・Encounter・Pacing から出さない。隠しの姿は `revealHidden` だけ。見つけるまで図鑑に出さない。Pacing・狐火・言霊は大妖怪と隠しへ誘導しない。
-- 後から混ざる通常妖怪は `game/normal/`。段・由来・「新」「レア」は画面に出さない。町の総数は増やさず、はじめの 12 種を減らす。`uniquePerNight` と `isLegend` を混ぜない。ぬらりひょんの条件は `allNormalContentComplete`。
+- 大妖怪・三大妖怪・隠しは `game/legends/` と `data/legendYokai.ts`。`spawnWild`・`spawnBonus`・Encounter・Pacing から出さない。隠しの姿は `revealHidden` だけ。見つけるまで図鑑に出さない。Pacing・狐火・言霊は大妖怪と隠しへ誘導しない。妖怪ごとの違いはデータで書き、妖怪ごとの if 文を作らない。足し方は architecture の「大妖怪を足すとき」。
+- 後から混ざる通常妖怪は `game/normal/`。段・由来・「新」「レア」は画面に出さない。町の総数は増やさず、はじめの 12 種を減らす。`uniquePerNight` と `isLegend` を混ぜない。ぬらりひょんの条件は `allNormalContentComplete`。足し方は「通常妖怪を足すとき」。
 - 温泉宿「宵霞楼」は実装済み（`src/onsen/`、`?onsen`）。攻略ではなく再会の場所。依頼にしない。入れるかは `OnsenVisit`、誰がいるかは `OnsenGuestRoster`。
 - 新しい Encounter は `EncounterScheduler` 経由。遊びの抽選は `NightSeed`（`?seed=`）。見た目の乱数は `Math.random`。
 - 操作を変えたら README も更新する。カメラは押した方を向く。矢印はカメラ専用。俯瞰は主人公中心。遮るものがあれば手前へ寄せる（`World.cameraObstacle`）。
 - 夜のあと（締め・結果・眺める・撮影）は野良・脅威・Encounter・Pacing・賑わい・地区・夜の刻を止める。撮影は Actor を並べ直すだけで複製しない。絵巻雲は画面の端、夜の間 10 枚まで。町の静的部品は `World.group`。localStorage の失敗は無視する。
-- 縦画面（幅 600px 以下）が基準。タッチは 44px 以上。視点パッドは左下、行動は右。`env(safe-area-inset-*)`。ホバー専用の操作は作らない。picking には CSS ピクセル（描画解像度を掛けない）。
+- 縦画面（幅 600px 以下）が基準。タッチは 44px 以上。視点パッドは左下、行動は右。`env(safe-area-inset-*)`。ホバー専用の操作は作らない。picking には CSS ピクセル（描画解像度を掛けない）。縦画面は横の画角を固定（`CameraDirector.fitAspect`）。粒子は使い回し、同時数を絞る。
 - `?debug`：J 妖怪 / T 時間 / K 賑わい / N Encounter / G 狐火 / L 言霊 / H 花火 / O 陰陽師。`?night=` は秒（既定 1200）。

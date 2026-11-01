@@ -95,6 +95,7 @@ export class ModelFactory {
       const h = bb.maximumWorld.y - bb.minimumWorld.y || 1;
       merged.scaling.scaleInPlace(1 / h);
       merged.isVisible = false;
+      merged.addLODLevel(260, null);
       this.templates.set(id, merged);
     } catch (e) {
       console.warn("GLB load failed, keep procedural model", id, e);

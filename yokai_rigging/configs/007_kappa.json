@@ -1,0 +1,22 @@
+{
+  "number": 7,
+  "name": "河童",
+  "id": "kappa",
+  "enabled": true,
+  "input": "input/007_kappa/河童.zip",
+  "rig": "humanoid_chibi",
+  "forward": "-Y",
+  "up": "Z",
+  "scale": 1.0,
+  "target_height": 1.0,
+  "texture": null,
+  "bone_overrides": {},
+  "weight_method": "auto",
+  "rigid_regions": [
+    {"bone": "Spine", "min": [-0.4, 0.10, 0.27], "max": [0.4, 0.50, 0.64], "feather": 0.08}
+  ],
+  "quality_exceptions": {},
+  "animations": {"Idle": {}, "Walk": {}, "Happy": {}, "Surprise": {}, "Appear": {}},
+  "previews": true,
+  "output": "output"
+}

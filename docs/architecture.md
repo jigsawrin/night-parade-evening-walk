@@ -65,6 +65,7 @@
 | 思い出の記録 | `game/after/NightRecorder.ts`（イベントを聞く）、`NightMemoryLog.ts` |
 | 温泉宿「宵霞楼」 | `src/onsen/`（遅延読み込み：`OnsenApp` 入口・`OnsenWorld` と `build/` 箱庭（二階・三階は `upperBuild`）・`OnsenAtmosphere` 空気・`OnsenGuests` 客の動き・`OnsenBath` 湯に入る・`OnsenUI` 画面）、`game/onsen/`（`OnsenVisit` 入れるか・訪問・宿泊客、`OnsenPlacementRules` 居場所、`OnsenGuestRoster` 抽選、`OnsenGroundRules` 階・階段・湯の深さ・湯あたり）、`data/onsen.ts`（人数・区域）・`data/onsenMap.ts`（間取り・居場所）。下の「温泉宿「宵霞楼」」 |
 | 記念撮影 | `game/after/PhotoFormation.ts`（陣形）・`PhotoPose.ts`（ポーズ・カメラの方を向く `faceYaw`）・`PhotoStage.ts`（並べ直す）・`PhotoSpot.ts`（場所：参道の鳥居を背にした広場 `shrinePhotoSpot`・近くの開けた場所 `findPhotoSpot`）、`data/photo.ts`、`presentation/PhotoModeDirector.ts`（撮影の操作・カメラ・隠す）・`AfterNightDirector.ts`（夜の後の流れ）・`PhotoUI.ts`・`PhotoShot.ts`（撮る・保存・共有）・`ShareTools.ts`。建物を隠すと地面の家の影も消す（`World.setHouseShadowsHidden`）、御神木など一つずつ隠す（`StructureVisibilityDirector.setHiddenIds`） |
+| 骨付きの GLB を動かす（クリップを頂点アニメーションに焼いて InstancedMesh のまま再生） | `characters/RiggedModel.ts`（読み込み・焼き・`Rig.play`）、`characters/ModelFactory.loadRigged`（`public/models/rigged.json` の妖怪だけ差し替え。町を作る前に待つ）、`Actor.playClip`（歩き・待ち・喜ぶ・驚く・現れるのクリップ選択）、`data/riggedModels.ts`（クリップ名）。作るのは `yokai_rigging/`（骨付き GLB を `public/models/<id>.glb` に置き、id を `rigged.json` に足す）。`?norig` で手続きモデルへ戻して比べられる |
 | デバッグ（?debug のキー・表示） | `game/DebugTools.ts` |
 | Babylon の部品・遅延読み込み | `core/babylon.ts` |
 | フォント | `src/assets/fonts/`（生成物）、`scripts/fonts.mjs` |

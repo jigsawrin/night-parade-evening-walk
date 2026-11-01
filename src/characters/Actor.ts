@@ -1,5 +1,7 @@
 import type { InstancedMesh } from "../core/babylon";
 import type { ModelFactory } from "./ModelFactory";
+import type { Rig } from "./RiggedModel";
+import type { RigClipName } from "../data/riggedModels";
 import { YOKAI, type RigFamily } from "../data/yokaiTypes";
 import { dampAngle } from "../core/util";
 import type { PoseSample } from "../game/after/PhotoPose";
@@ -37,6 +39,9 @@ export class Actor {
   private visible = true;
   /** 一本足で跳ねる歩き方（YokaiType.gait） */
   private hopGait: boolean;
+  /** 骨付きのモデルなら、焼いたクリップの再生口（なければ手続きアニメ） */
+  private rig: Rig | undefined;
+  private clip: RigClipName | "" = "";
 
   constructor(factory: ModelFactory, public typeId: string, modelId = typeId) {
     this.mesh = factory.instance(modelId);
@@ -47,6 +52,7 @@ export class Actor {
     this.hover = def?.hover ?? 0;
     this.scale = def?.scale ?? 1;
     this.hopGait = def?.gait === "hop";
+    this.rig = factory.rigOf(this.mesh);
   }
 
   setPos(x: number, y: number, z: number) {
@@ -94,6 +100,10 @@ export class Actor {
       roll = pose.roll;
       pitch = pose.pitch;
       sy = pose.sy;
+    } else if (this.rig) {
+      // 骨付き：歩き・待ちはクリップが動かす。浮く妖怪は高さだけ持つ
+      if (this.family === "FLOAT") bob = this.hover;
+      this.playClip(moving);
     } else switch (this.family) {
       case "CHIBI_BIPED":
         if (moving) {
@@ -167,6 +177,15 @@ export class Actor {
     const shs = (this.family === "FLOAT" ? 0.8 : 1) * s * Math.max(0.35, 1 - h * 0.25);
     this.shadow.position.set(this.x, this.groundY + 0.03, this.z);
     this.shadow.scaling.set(shs, 1, shs);
+  }
+
+  /** 状態に合うクリップへ切り替える（変わったときだけ） */
+  private playClip(moving: boolean) {
+    const want: RigClipName = this.happyT > 0 ? "Happy" : this.surpriseT > 0 ? "Surprise" : this.popT > 0 ? "Appear" : moving ? "Walk" : "Idle";
+    if (want === this.clip) return;
+    this.clip = want;
+    const once = want === "Happy" || want === "Surprise" || want === "Appear";
+    this.rig!.play(this.mesh, want, once, want === "Happy" ? 0.7 : want === "Surprise" ? 0.5 : want === "Appear" ? 0.45 : 0);
   }
 
   /** 影を落とす地面の高さ（屋根の上などは呼び出し側で設定） */

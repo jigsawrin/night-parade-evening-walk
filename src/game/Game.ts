@@ -142,6 +142,7 @@ export class Game {
     this.world.build();
     this.factory = new ModelFactory(scene, this.mats);
     this.factory.warmup(Object.keys(MODELS));
+    if (!new URLSearchParams(location.search).has("norig")) await this.factory.loadRigged(); // ?norig：骨付きを使わない（比較用）
     this.camera = new CameraDirector(scene, this.canvas);
     this.camera.obstacleHeight = (x, z) => this.world.cameraObstacle(x, z);
     this.atmos = new WorldAtmosphereDirector(scene, this.world, this.mats);

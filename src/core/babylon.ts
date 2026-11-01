@@ -20,7 +20,7 @@ export { AbstractEngine, Camera, Scene };
 export { Engine } from "@babylonjs/core/Engines/engine";
 export { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
 export { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
-export { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
+export { Matrix, Vector3, Vector4 } from "@babylonjs/core/Maths/math.vector";
 export { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 export { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 export { PointLight } from "@babylonjs/core/Lights/pointLight";
@@ -41,6 +41,8 @@ export { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 export { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 export { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 export { ParticleSystem } from "@babylonjs/core/Particles/particleSystem";
+export { BakedVertexAnimationManager } from "@babylonjs/core/BakedVertexAnimation/bakedVertexAnimationManager";
+export { VertexAnimationBaker } from "@babylonjs/core/BakedVertexAnimation/vertexAnimationBaker";
 
 // ---- 形の生成：MeshBuilder は全形状（文字・多面体…）を読み込むので、使う形だけを同じ名前でまとめる
 import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";

@@ -53,6 +53,7 @@ URL パラメータ：
 
 - `?night=300` 一夜の長さ（秒、既定 1200 秒 = 20 分）
 - `?seed=12345` 一夜の種。同じ種なら今夜の山札（出る Encounter と順番）・今宵の妖怪・気配の妖怪の顔ぶれが再現される。文字列も可（`?seed=今日の種`）。無指定なら毎回新しい種になり、結果画面に表示される
+- `?norig` 骨付きの GLB を使わず、手続き生成のモデルで動かす（比較用。骨付きは `public/models/rigged.json` にある妖怪だけ）
 - `?debug` 画面上部にデバッグ表示（賑わい・最終加入からの秒数・Pacing・場の Encounter・山札・Seed・地区の状態）。キー：J 妖怪を呼ぶ／T 時間を進める／K 賑わい +15／N Encounter を出す／G 狐火の誘導／L 言霊／H 花火／O 陰陽師をすべて呼び、結界をすぐ張れるようにする
 
 ## 実装範囲（仕様書 29章 Prototype v0.1）
@@ -261,7 +262,7 @@ src/
   assets/fonts/    同梱フォント（画面に出る字だけのサブセット。npm run fonts が生成）
   core/            イベントバス・入力・ユーティリティ・保存・seed、babylon.ts（Babylon の入口。ここからだけ読む）
   world/           World（当たり判定・歩ける・視線）/ WorldKit（部品と結合）/ build/（town・landmarks・nature）、地面テクスチャとミニマップ
-  characters/      手続き生成モデル（部品定義）、ModelFactory（インスタンス + LOD + GLB 差し替え口）、Actor（Rig Family 別の手続きアニメ）
+  characters/      手続き生成モデル（部品定義）、ModelFactory（インスタンス + LOD + GLB 差し替え口）、RiggedModel（骨付き GLB を頂点アニメーションに焼く）、Actor（Rig Family 別の手続きアニメ。骨付きならクリップを選ぶ）
   game/            ルール：Parade / Player / WildYokai（加入条件）/ Threats / Activities / NightClock / Game
                    v0.2：FestivalSystems（まとめ役）/ ParadeAttractionSystem / FestivalMomentum / NightPacingDirector /
                          EncounterDirector + encounters/* / EventDeck / DistrictAwakeningSystem / CircleTracker

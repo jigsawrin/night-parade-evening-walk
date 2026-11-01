@@ -3,6 +3,7 @@ import { MODELS, type GlowKind, type Part } from "./models";
 import { buildPart } from "./PartBuilder";
 import type { Materials } from "../world/Materials";
 import { YOKAI } from "../data/yokaiTypes";
+import { loadRigged, type Rig } from "./RiggedModel";
 
 /**
  * キャラクターテンプレートの工場。
@@ -13,6 +14,9 @@ import { YOKAI } from "../data/yokaiTypes";
  */
 export class ModelFactory {
   private templates = new Map<string, Mesh>();
+  /** 骨付きのテンプレート → 焼いたクリップ */
+  private rigs = new Map<Mesh, Rig>();
+  private clockStart = performance.now();
   private blob: Mesh;
 
   constructor(private scene: Scene, private mats: Materials) {
@@ -61,6 +65,47 @@ export class ModelFactory {
       if (url) void this.swapToGlb(id, url);
     }
     return t;
+  }
+
+  /**
+   * 骨付き GLB を読んでテンプレートを置き換える（どれかは public/models/rigged.json）。町を作る前に待つ（途中で姿が変わらないように）。
+   * 一覧が無い・読めなかった妖怪は手続き生成のモデルのまま。
+   */
+  async loadRigged() {
+    const base = import.meta.env.BASE_URL;
+    let ids: string[] = [];
+    try {
+      const url = `${base}models/rigged.json`;
+      const res = await fetch(url);
+      if (res.ok) ids = (await res.json()) as string[];
+    } catch {
+      /* 一覧が無ければ手続き生成のまま */
+    }
+    const clock = () => (performance.now() - this.clockStart) / 1000;
+    for (let i = 0; i < ids.length; i += 6) {
+      await Promise.all(
+        ids.slice(i, i + 6).map(async (id) => {
+          try {
+            const r = await loadRigged(`${base}models/${id}.glb`, this.scene, clock);
+            if (!r) return;
+            const old = this.template(id);
+            old.getLODLevels().forEach((l) => l.mesh?.dispose());
+            old.dispose();
+            r.mesh.name = `rig_${id}`;
+            r.mesh.addLODLevel(260, null);
+            this.templates.set(id, r.mesh);
+            this.rigs.set(r.mesh, r.rig);
+          } catch (e) {
+            console.warn("rigged GLB load failed, keep procedural model", id, e);
+          }
+        }),
+      );
+    }
+  }
+
+  /** そのインスタンスが骨付きなら、クリップの再生口 */
+  rigOf(inst: InstancedMesh): Rig | undefined {
+    return this.rigs.get(inst.sourceMesh);
   }
 
   /** 事前に全テンプレートを作ってヒッチを避ける */

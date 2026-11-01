@@ -1,6 +1,0 @@
-input/*
-!input/README.md
-output/
-reports/
-__pycache__/
-*.pyc

@@ -4,3 +4,20 @@ dist
 
 # 元絵（重いので git に入れない。変換したものだけ public/ に置く：scripts/yokai-ink.py）
 art-source/
+
+# Local secrets / credentials (never publish or commit)
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.npmrc
+.pypirc
+*.pem
+*.p12
+*.pfx
+*.key
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+id_ecdsa

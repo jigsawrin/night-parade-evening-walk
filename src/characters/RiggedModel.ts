@@ -1,4 +1,4 @@
-import { BakedVertexAnimationManager, InstancedMesh, Mesh, Scene, Vector4, VertexAnimationBaker, loadGlbMeshes } from "../core/babylon";
+import { BakedVertexAnimationManager, InstancedMesh, Matrix, Mesh, Scene, Vector4, VertexAnimationBaker, loadGlbMeshes } from "../core/babylon";
 import type { RigClipName } from "../data/riggedModels";
 
 /** 焼くときの標本化（フレーム/秒）と、再生の既定の速さ */
@@ -62,13 +62,30 @@ export async function loadRigged(url: string, scene: Scene, clock: () => number)
       g.goToFrame(f);
       res.meshes[0].computeWorldMatrix(true);
       res.meshes[0].getDescendants(false).forEach((n) => (n as Mesh).computeWorldMatrix?.(true));
-      skeleton.computeAbsoluteMatrices(true);
+      skeleton.prepare(true);
       rows.push(new Float32Array(skeleton.getTransformMatrices(skinned)));
     }
     g.stop();
     clips[g.name] = { from, to: rows.length - 1 };
   }
   res.animationGroups.forEach((g) => g.dispose());
+  // glTF ローダは根（__root__）に左右反転の変換を持たせ、インスタンスもそれを親として引き継ぐ。
+  // すると Actor の位置が左右反転して影とずれるので、根の変換を頂点と焼いた行列へ移し、親を外す。
+  const world = skinned.computeWorldMatrix(true).clone();
+  const inverse = world.clone().invert();
+  const blocks = Matrix.Identity();
+  for (const row of rows) {
+    for (let o = 0; o < row.length; o += 16) {
+      Matrix.FromArrayToRef(row, o, blocks);
+      inverse.multiply(blocks).multiply(world).copyToArray(row, o);
+    }
+  }
+  skinned.parent = null;
+  skinned.position.setAll(0);
+  skinned.rotationQuaternion = null;
+  skinned.rotation.setAll(0);
+  skinned.scaling.setAll(1);
+  skinned.bakeTransformIntoVertices(world);
   const data = new Float32Array(rows.length * rows[0].length);
   rows.forEach((r, i) => data.set(r, i * r.length));
   const manager = new BakedVertexAnimationManager(scene);

@@ -89,7 +89,7 @@ export interface SpawnDef {
   trail?: [number, number][];
 }
 export const SPAWNS: SpawnDef[] = [
-  // 小鬼の群れ
+  // 鬼の群れ
   { type: "oni", x: 8, z: -95, n: 2, r: 3 },
   { type: "oni", x: -18, z: -50, n: 3, r: 4 },
   { type: "oni", x: 30, z: -38, n: 3, r: 5 },

@@ -82,7 +82,7 @@ test("図鑑：ぬらりひょんは通常の図鑑の完成（N / N）→ 宵�
 
 test("図鑑の一項目：別名はある妖怪だけ。格・縁帳の情報へ広げられる形", () => {
   const oni = zukanEntry("oni", { oni: 12 })!;
-  assert.deepEqual([oni.name, oni.aliases, oni.rankLabel, oni.count], ["小鬼", [], "妖怪", 12]);
+  assert.deepEqual([oni.name, oni.aliases, oni.rankLabel, oni.count], ["鬼", [], "妖怪", 12]);
   for (const id of YOKAI_ORDER) assert.ok(!YOKAI[id].aliases || YOKAI[id].aliases!.length > 0, `${id}：空の別名を書かない`);
   const shuten = zukanEntry("shuten", { shuten: 1 }, { met: ["shuten"], joinCount: { shuten: 2 } })!;
   assert.deepEqual([shuten.rankLabel, shuten.met, shuten.joinNights], ["三大妖怪", true, 2]);

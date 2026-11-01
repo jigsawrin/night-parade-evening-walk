@@ -235,3 +235,8 @@ test("行き先：同じ夜は同じ seed、次の夜は別の seed、タイト�
   const title = new URLSearchParams(nightSearch("?seed=1&go=1&debug", "title", 1));
   assert.ok(!title.has("seed") && !title.has("go") && title.has("debug"));
 });
+
+test("NightResult：joinOrder（絵巻の並び）は加入順のまま持つ。渡さなければ空", () => {
+  assert.deepEqual(buildNightResult({ ...resultInput(), joinOrder: ["kappa", "oni", "kappa"] }).joinOrder, ["kappa", "oni", "kappa"]);
+  assert.deepEqual(buildNightResult(resultInput()).joinOrder, []);
+});

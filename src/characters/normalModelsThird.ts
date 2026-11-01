@@ -56,7 +56,7 @@ export const THIRD_MODELS: Record<string, Part[]> = {
     { s: "sphere", c: EYE_B, p: [0, 0.66, 0.34], sc: 0.13 },
     ...mirror((sx) => [{ s: "sphere", c: "#8a6a50", p: [sx * 0.34, 0.5, 0.06], sc: 0.13 } as Part]),
   ],
-  // ムジナ：灰色の背に白い顔、顔に黒い筋（化けているときは小鬼の姿）
+  // ムジナ：灰色の背に白い顔、顔に黒い筋（化けているときは鬼の姿）
   mujina: [
     ...quadLegs("#3a3a3a", 0.12, 0.18, 0.16, 0.1),
     { s: "sphere", c: "#8a8a86", p: [0, 0.32, -0.02], sc: [0.44, 0.36, 0.66] },

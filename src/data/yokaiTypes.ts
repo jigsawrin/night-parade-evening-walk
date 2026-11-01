@@ -216,7 +216,7 @@ export function isActiveYokai(def: Pick<YokaiType, "zukanAvailability"> | undefi
 
 export const YOKAI: Record<string, YokaiType> = {
   oni: {
-    id: "oni", name: "小鬼", reading: "こおに", family: "CHIBI_BIPED", rule: { kind: "touch" }, se: "karan", rank: "normal", discovery: "normal",
+    id: "oni", name: "鬼", reading: "おに", family: "CHIBI_BIPED", rule: { kind: "touch" }, se: "karan", rank: "normal", discovery: "normal",
     lore: "鬼は人に災いや恐れをもたらす異形として古くから語られる。",
     zukanEncounter: "町で見つけて近づくと、楽しそうに百鬼夜行へ加わる。",
     zukanFlavor: "祭囃子が聞こえると、もう足が勝手に動いている。",

@@ -98,11 +98,11 @@ test("大妖怪のデータ：加入条件は legend。boss・greatGroup・古�
 
 // ---------------------------------------------------------------- 加入条件
 
-test("酒呑童子：小鬼八妖＋化け狸二妖（今までと同じ）", () => {
+test("酒呑童子：鬼八妖＋化け狸二妖（今までと同じ）", () => {
   const r = ruleOf("shuten");
   assert.deepEqual(legendMissing(r, ctx({ c: { oni: 8, tanuki: 2 } })), []);
-  assert.deepEqual(legendMissing(r, ctx({ c: { oni: 5 } })), ["小鬼あと三妖", "化け狸あと二妖"]);
-  assert.deepEqual(describeLegendRule(r), ["小鬼八妖", "化け狸二妖"]);
+  assert.deepEqual(legendMissing(r, ctx({ c: { oni: 5 } })), ["鬼あと三妖", "化け狸あと二妖"]);
+  assert.deepEqual(describeLegendRule(r), ["鬼八妖", "化け狸二妖"]);
 });
 
 test("大天狗：天狗一妖＋行列の遊び二つ（今までと同じ）", () => {
@@ -124,7 +124,7 @@ test("不足の表示：条件の種類ごとに短い言葉（妖怪ごとの i
     ],
   };
   assert.deepEqual(legendMissing(rule, ctx({ total: 20 })), [
-    "小鬼あと三妖", "商店街を祭りにする", "狐火をあと一度追う", "賑わいを「熱狂」まで高める", "行列あと十妖", "行列の遊びあと一つ",
+    "鬼あと三妖", "商店街を祭りにする", "狐火をあと一度追う", "賑わいを「熱狂」まで高める", "行列あと十妖", "行列の遊びあと一つ",
   ]);
   const ok = ctx({
     c: { oni: 3 }, total: 30, activities: 1, districtsAwakened: ["shotengai"], encounters: new Map([["foxfireTrail", 1]]), momentumLevel: 4,
@@ -391,7 +391,7 @@ test("思い出：三大妖怪の加入は今夜の三大出来事にほぼ必�
     memory: { firstFriend: log.firstFriend, hundredth: null, legends: log.legends, highlights: (n) => log.highlights(n), timeline: () => log.timeline(), route: log.route },
   });
   assert.deepEqual(r.legends.map((l) => [l.type, l.rank, l.discovery]), [["daitengu", "greater", undefined], ["shuten", "threeGreat", undefined], ["nurarihyon", "greater", "hidden"]]);
-  assert.deepEqual(r.legends[1].conditions, ["小鬼八妖", "化け狸二妖"]);
+  assert.deepEqual(r.legends[1].conditions, ["鬼八妖", "化け狸二妖"]);
   assert.equal(r.legends[1].district, "妖怪横丁");
   assert.equal(r.legends[1].t, 400);
   assert.deepEqual(JSON.parse(JSON.stringify(r.legends)), r.legends, "プレーンな値だけ");

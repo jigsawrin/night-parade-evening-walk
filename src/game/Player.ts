@@ -5,8 +5,9 @@ import type { World } from "../world/World";
 /** 主人公が歩く場所（町でも温泉宿でも）：押し戻しと地面の高さ */
 export type WalkWorld = Pick<World, "resolve" | "groundHeight">;
 import { clamp } from "../core/util";
+import { PROTAGONIST } from "../data/protagonist";
 
-/** 主人公（小鬼）。サイズは変化しない。成長するのは行列のほう。 */
+/** 主人公（青鬼。図鑑の鬼とは別。data/protagonist.ts）。サイズは変化しない。成長するのは行列のほう。 */
 export class Player {
   actor: Actor;
   vx = 0;
@@ -20,7 +21,7 @@ export class Player {
   auto: { x: number; z: number } | null = null;
 
   constructor(factory: ModelFactory, private world: WalkWorld, x: number, z: number) {
-    this.actor = new Actor(factory, "oni", "hero");
+    this.actor = new Actor(factory, PROTAGONIST.typeId, PROTAGONIST.modelId);
     this.actor.setPos(x, 0, z);
   }
 

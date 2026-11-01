@@ -186,6 +186,7 @@ export class AfterNightDirector {
       total: h.parade.total,
       stage: h.stage.jp,
       types: h.typeCounts,
+      joinOrder: h.parade.followers.map((f) => f.actor.typeId),
       encountersByKind: this.recorder.encountersByKind,
       miniMerged: f.encounters.miniMerged,
       activitiesDone: this.recorder.activitiesDone,

@@ -57,7 +57,7 @@ export interface LegendRecord {
   district?: string;
   x: number;
   z: number;
-  /** 満たした条件の短い言葉（例：["小鬼八妖", "化け狸二妖"]） */
+  /** 満たした条件の短い言葉（例：["鬼八妖", "化け狸二妖"]） */
   conditions: string[];
 }
 

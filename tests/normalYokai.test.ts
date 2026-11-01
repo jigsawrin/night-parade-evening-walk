@@ -28,7 +28,7 @@ const SECOND = ["海坊主", "テケテケ", "アマビエ", "天邪鬼", "雪�
 const THIRD = ["磯姫", "一本だたら", "うわん", "土蜘蛛", "狂骨", "片輪車", "餓鬼", "魍魎", "覚", "ぬっぺっぽう", "野槌", "枕返し", "ムジナ", "八咫烏", "わいら", "尻こぼし", "白沢", "釣瓶落とし", "火車", "目目連"];
 /** 一夜一体の通常妖怪（大妖怪ではない） */
 const NORMAL_UNIQUE = ["hakutaku", "umibozu", "teketeke", "amabie", "nue", "hasshaku", "yatagarasu", "jorogumo", "tsurube_otoshi", "kasha", "nopperabo"];
-const BASE = ["小鬼", "火の玉", "提灯お化け", "化け狸", "座敷童", "猫又", "河童", "唐傘お化け", "ろくろ首", "天狗", "化け狐", "一反木綿"];
+const BASE = ["鬼", "火の玉", "提灯お化け", "化け狸", "座敷童", "猫又", "河童", "唐傘お化け", "ろくろ首", "天狗", "化け狐", "一反木綿"];
 
 const byName = (name: string) => Object.values(YOKAI).find((d) => d.name === name)!;
 const waveOf = (id: string) => YOKAI[id].normalWave ?? 0;
@@ -83,10 +83,11 @@ test("名簿：通常妖怪 53 種・大妖怪 10 体・三大妖怪 3 体（コ
   assert.ok(new Set(["azukiarai", "jorogumo", "tsurube_otoshi", "kasha", "mokumokuren", "nopperabo"].map(waveOf)).size >= 3);
 });
 
-test("データ：かんきちは入れない・新しい「鬼」は作らない（小鬼 oni のまま）・ぬっぺっぽうの別名にぬっぺふほふ", () => {
+test("データ：かんきちは入れない・「鬼」は oni の一種類だけ（小鬼という名前は無い）・ぬっぺっぽうの別名にぬっぺふほふ", () => {
   assert.ok(!Object.values(YOKAI).some((d) => /かんきち|カンキチ/.test(d.name + d.reading)));
-  assert.equal(Object.values(YOKAI).filter((d) => d.name === "鬼" || d.reading === "おに").length, 0, "「鬼」という新しい種類は無い");
-  assert.deepEqual([YOKAI.oni.id, YOKAI.oni.name, YOKAI.oni.normalWave], ["oni", "小鬼", undefined]);
+  assert.deepEqual(Object.values(YOKAI).filter((d) => d.name === "鬼" || d.reading === "おに").map((d) => d.id), ["oni"], "「鬼」は oni の一種類だけ");
+  assert.equal(Object.values(YOKAI).filter((d) => d.name.includes("小鬼")).length, 0);
+  assert.deepEqual([YOKAI.oni.id, YOKAI.oni.name, YOKAI.oni.normalWave], ["oni", "鬼", undefined]);
   const n = byName("ぬっぺっぽう");
   assert.deepEqual([n.reading, n.aliases], ["ぬっぺっぽう", ["ぬっぺふほふ"]]);
   assert.deepEqual(byName("磯姫").aliases, ["磯女"]);

@@ -11,8 +11,8 @@ import type { EarnedTitle } from "../../data/titles";
 import { RANK_INFO } from "../../data/legendConfig";
 import type { CompanionRecord, LegendRecord, MemoryEvent, RoutePoint } from "./NightMemoryLog";
 
-/** 2：legends（大妖怪・三大妖怪の加入）を足した。古い結果には無い（読むときは r.legends ?? []） */
-export const RESULT_VERSION = 2;
+/** 2：legends（大妖怪・三大妖怪の加入）を足した。古い結果には無い（読むときは r.legends ?? []）。3：joinOrder（絵巻の並び）を足した（r.joinOrder ?? []） */
+export const RESULT_VERSION = 3;
 
 /** 百鬼値の内訳の係数（調整はここだけ） */
 export const SCORE = {
@@ -99,6 +99,8 @@ export interface NightResult {
   /** 今夜の友（最初の仲間） */
   friend: (CompanionRecord & { together: number }) | null;
   hundredth: CompanionRecord | null;
+  /** 夜の終わりに行列にいる妖怪の種類 id（加入順。1 人目が先頭）。絵巻の並び（game/after/EmakiRoster.ts）。version 2 までの古い結果には無い */
+  joinOrder: string[];
   /** 加わった大妖怪・三大妖怪（加入順。隠し妖怪として見つけたなら discovery: "hidden"）。version 1 の古い結果には無い */
   legends: LegendRecord[];
   highlights: MemoryEvent[];
@@ -117,6 +119,8 @@ export interface NightResultInput {
   total: number;
   stage: string;
   types: ReadonlyMap<string, number>;
+  /** 夜の終わりの行列の種類 id（加入順） */
+  joinOrder?: readonly string[];
   encountersByKind: ReadonlyMap<string, number>;
   miniMerged: number;
   activitiesDone: readonly string[];
@@ -170,6 +174,7 @@ export function buildNightResult(i: NightResultInput): NightResult {
     friend: f ? { ...f, together: Math.max(0, i.elapsed - f.t) } : null,
     hundredth: i.memory.hundredth,
     legends,
+    joinOrder: [...(i.joinOrder ?? [])],
     highlights: i.memory.highlights(3),
     timeline: i.memory.timeline(),
     route: [...i.memory.route],

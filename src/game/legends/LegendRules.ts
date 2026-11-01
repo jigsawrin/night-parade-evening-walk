@@ -140,7 +140,7 @@ export function legendMet(rule: Pick<LegendRule, "conditions">, x: LegendContext
   return rule.conditions.every((c) => checkCondition(c, x).met);
 }
 
-/** 条件そのものを短い言葉で（結果・縁帳の「どうやって加わったか」）。例：["小鬼八妖", "化け狸二妖"] */
+/** 条件そのものを短い言葉で（結果・縁帳の「どうやって加わったか」）。例：["鬼八妖", "化け狸二妖"] */
 export function describeLegendRule(rule: Pick<LegendRule, "conditions">): string[] {
   return rule.conditions.map((c) => {
     switch (c.kind) {

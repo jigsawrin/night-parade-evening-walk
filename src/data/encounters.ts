@@ -178,7 +178,7 @@ export const NIGHT_THEMES: NightTheme[] = [
   { type: "chochin", text: "提灯の揺れる夜", weight: 1 },
   { type: "tanuki", text: "腹鼓の聞こえる夜", weight: 1 },
   { type: "nekomata", text: "猫の目が光る夜", weight: 1 },
-  { type: "oni", text: "小鬼の騒ぐ夜", weight: 1 },
+  { type: "oni", text: "鬼の騒ぐ夜", weight: 1 },
   { type: "kitsune", text: "狐火の灯る夜", weight: 0.8 },
   { type: "hitodama", text: "人魂の漂う夜", weight: 0.8 },
   { type: "karakasa", text: "からん、ころんと傘の跳ねる夜", weight: 0.8 },

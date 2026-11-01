@@ -245,7 +245,7 @@ export class Game {
     this.ui.showHud(true);
     this.ui.setDango(0);
     this.audio?.ui();
-    setTimeout(() => this.ui.toast("小鬼「ひとりぼっちの夜道…仲間を探しに行こう」"), 800);
+    setTimeout(() => this.ui.toast("鬼「ひとりぼっちの夜道…仲間を探しに行こう」"), 800);
     setTimeout(() => this.ui.toast("妖怪に近づくと、行列に加わってくれる"), 4200);
   }
 

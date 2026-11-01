@@ -1,5 +1,6 @@
 import { pick } from "../core/util";
 import { YOKAI, YOKAI_ORDER, isActiveYokai } from "../data/yokaiTypes";
+import { COMMON_CLIPS } from "../data/riggedModels";
 import type { Game } from "./Game";
 import { isSpecialYokai, isUniquePerNight } from "./legends/LegendRules";
 import { drawOnsenGuests } from "./onsen/OnsenGuestRoster";
@@ -14,6 +15,7 @@ import { spawnTotal } from "./normal/NormalSpawnPlanner";
  */
 export class DebugTools {
   private t = 0;
+  private commonIdx = 0;
 
   constructor(private game: Game) {}
 
@@ -30,6 +32,12 @@ export class DebugTools {
     if (inp.hit("KeyG")) g.festival.debugGuide();
     if (inp.hit("KeyL")) g.festival.debugKotodama();
     if (inp.hit("KeyH")) g.fireworks.show(3);
+    // 共通の動き（骨付きだけ）を、主人公と行列の全員に順に流す：呼吸 → 上下に跳ねる → くるり → 宙返り
+    if (inp.hit("KeyV")) {
+      const name = COMMON_CLIPS[this.commonIdx++ % COMMON_CLIPS.length];
+      g.player.actor.playCommon(name);
+      for (const f of g.parade.followers) f.actor.playCommon(name);
+    }
   }
 
   /** 画面上部の表示（0.25 秒ごと。隠したあとは、次の更新を待たずに戻す） */

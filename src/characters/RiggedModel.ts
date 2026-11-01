@@ -21,6 +21,12 @@ export class Rig {
     return name in this.clips;
   }
 
+  /** クリップの長さ（秒） */
+  length(name: string) {
+    const c = this.clips[name];
+    return c ? (c.to - c.from + 1) / SAMPLE : 0;
+  }
+
   /**
    * インスタンスに再生するクリップを入れる。
    * once: その時点を 0 フレーム目として始める（ループの途中から入らない）。seconds: その長さに収める。

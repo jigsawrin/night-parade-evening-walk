@@ -42,6 +42,9 @@ export class Actor {
   /** 骨付きのモデルなら、焼いたクリップの再生口（なければ手続きアニメ） */
   private rig: Rig | undefined;
   private clip: RigClipName | "" = "";
+  /** 共通の動きを流している間の残り秒と、その名前 */
+  private commonT = 0;
+  private commonClip: RigClipName = "Breath";
 
   constructor(factory: ModelFactory, public typeId: string, modelId = typeId) {
     this.mesh = factory.instance(modelId);
@@ -103,7 +106,7 @@ export class Actor {
     } else if (this.rig) {
       // 骨付き：歩き・待ちはクリップが動かす。浮く妖怪は高さだけ持つ
       if (this.family === "FLOAT") bob = this.hover;
-      this.playClip(moving);
+      this.playClip(moving, dt);
     } else switch (this.family) {
       case "CHIBI_BIPED":
         if (moving) {
@@ -179,12 +182,21 @@ export class Actor {
     this.shadow.scaling.set(shs, 1, shs);
   }
 
+  /** 共通の動き（Breath 呼吸・Bounce 上下に跳ねる・Spin くるり・Flip 宙返り）を一度流す。骨付きでなければ何もしない */
+  playCommon(name: RigClipName) {
+    if (!this.rig?.has(name)) return;
+    this.commonClip = name;
+    this.commonT = this.rig.length(name);
+    this.clip = "";
+  }
+
   /** 状態に合うクリップへ切り替える（変わったときだけ） */
-  private playClip(moving: boolean) {
-    const want: RigClipName = this.happyT > 0 ? "Happy" : this.surpriseT > 0 ? "Surprise" : this.popT > 0 ? "Appear" : moving ? "Walk" : "Idle";
+  private playClip(moving: boolean, dt: number) {
+    if (this.commonT > 0) this.commonT -= dt;
+    const want: RigClipName = this.commonT > 0 ? this.commonClip : this.happyT > 0 ? "Happy" : this.surpriseT > 0 ? "Surprise" : this.popT > 0 ? "Appear" : moving ? "Walk" : "Idle";
     if (want === this.clip) return;
     this.clip = want;
-    const once = want === "Happy" || want === "Surprise" || want === "Appear";
+    const once = want === "Happy" || want === "Surprise" || want === "Appear" || want === "Spin" || want === "Flip";
     this.rig!.play(this.mesh, want, once, want === "Happy" ? 0.7 : want === "Surprise" ? 0.5 : want === "Appear" ? 0.45 : 0);
   }
 
